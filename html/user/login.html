@@ -1,0 +1,17 @@
+<!-- This defines the head tag context -->
+{{define "head"}}
+<title>pensive/login</title>
+{{end}}
+
+<!-- This defines the body tag context -->
+{{define "body"}}
+<main>
+    <div>
+        <form method="post">
+            <div>Username: <input type="text" name="username"></div>
+            <div>Password: <input type="password" name="password"></div>
+            <div><button type="submit">Login</button> <a href="/register">Sign up? here</a></div>
+        </form>
+    </div>
+</main>
+{{end}}

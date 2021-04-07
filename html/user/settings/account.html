@@ -1,0 +1,39 @@
+<!-- This defines the head tag context -->
+{{define "head"}}
+{{$name := "home"}}
+{{if .Name}}{{ $name = .Name}}{{end}}
+<title>pensive/{{$name}} - {{.Title}}</title>
+{{end}}
+
+<!-- This defines the body tag context -->
+{{define "body"}}
+<header>
+    <nav>
+        <div><a href="/">home</a></div>
+        {{if .Name}}
+        <div><a href="/@{{.Name}}">@{{.Name}}</a></div>{{end}}
+        <div><a href="/settings">settings</a></div>
+        <form action="/logout" method="post"><button>leave</button></form>
+    </nav>
+</header>
+<main>
+    <h1>{{.Title}}</h1>
+
+    <div>
+        <div>
+            <ul>
+                <!-- this should also refresh -->
+                <li><a href="/settings/profile">profile</a></li>
+                <li><a href="/settings/privacy">privacy</a></li>
+                <li><a href="/settings/account">account</a></li>
+            </ul>
+        </div>
+        <form method="post">
+            <div>Email: <input type="email" name="email" value="{{.User.Email}}" required></div>
+            <!-- allow auto-complete -->
+            <div>Confirm Password: <input type="password" name="password" value=""></div>
+            <div><button type="submit">Update</button></div>
+        </form>
+    </div>
+</main>
+{{end}}
