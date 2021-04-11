@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/gocs/pensive/pkg/router"
+	"github.com/gocs/pensive/internal/router"
 )
 
 func main() {

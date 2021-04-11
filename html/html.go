@@ -23,7 +23,7 @@ import (
 	"io"
 	"text/template"
 
-	"github.com/gocs/pensive/pkg/manager"
+	"github.com/gocs/pensive/internal/manager"
 )
 
 //go:embed *

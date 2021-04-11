@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/go-redis/redis"
-	"github.com/gocs/pensive/internal/timelayout"
+	"github.com/gocs/pensive/pkg/timelayout"
 )
 
 // Post user generated inputs

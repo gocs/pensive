@@ -6,8 +6,8 @@ import (
 
 	"github.com/go-redis/redis"
 	"github.com/gocs/pensive/html"
-	"github.com/gocs/pensive/pkg/manager"
-	sessions "github.com/gocs/pensive/pkg/session"
+	"github.com/gocs/pensive/internal/manager"
+	sessions "github.com/gocs/pensive/internal/session"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )

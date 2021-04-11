@@ -7,8 +7,8 @@ import (
 
 	"github.com/go-redis/redis"
 	"github.com/gocs/pensive"
-	"github.com/gocs/pensive/internal/timelayout"
-	sessions "github.com/gocs/pensive/pkg/session"
+	"github.com/gocs/pensive/pkg/timelayout"
+	sessions "github.com/gocs/pensive/internal/session"
 )
 
 // User the general people
