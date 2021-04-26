@@ -20,8 +20,9 @@
 
     {{if .DisplayForm}}
     <div>
-        <form action="/post" method="post">
+        <form action="/post" method="post" enctype="multipart/form-data">
             <div><input type="text" name="post"></div>
+            <div><input type="file" name="media-source" accept="audio/*,video/*,image/*"></div>
             <div><button type="submit">Submit</button></div>
         </form>
     </div>
@@ -32,6 +33,7 @@
             <strong><a href="/{{.User.Username}}">{{.User.Username}}</a> wrote:</strong>
         </div>
         <div>{{.Body}}</div>
+        {{if .MediaID}}<div><img src="http://localhost:8080/{{.MediaID}}" alt=""></div>{{end}}
     </div>
     {{end}}
 </main>

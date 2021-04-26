@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/go-redis/redis"
+	"github.com/gocs/pensive"
 	"github.com/gocs/pensive/pkg/timelayout"
 )
 
@@ -20,6 +21,12 @@ type Post struct {
 func (p *Post) Body() (string, error) {
 	key := fmt.Sprintf("post:%d", p.id)
 	return p.c.HGet(key, "body").Result()
+}
+
+// MediaID getter
+func (p *Post) MediaID() (string, error) {
+	key := fmt.Sprintf("post:%d", p.id)
+	return p.c.HGet(key, "media_id").Result()
 }
 
 // User getter
@@ -64,7 +71,7 @@ func (p *Post) UpdatedAt() (*time.Time, error) {
 }
 
 // AddPost creates a new post, saves it to the database, and returns the newly created question
-func AddPost(c redis.Cmdable, userID int64, body string) (*Post, error) {
+func AddPost(c redis.Cmdable, p pensive.Post) (*Post, error) {
 	id, err := c.Incr("post:next-id").Result()
 	if err != nil {
 		return nil, err
@@ -76,12 +83,13 @@ func AddPost(c redis.Cmdable, userID int64, body string) (*Post, error) {
 	key := fmt.Sprintf("post:%d", id)
 	pipe := c.Pipeline()
 	pipe.HSet(key, "id", id)
-	pipe.HSet(key, "user_id", userID)
-	pipe.HSet(key, "body", body)
+	pipe.HSet(key, "user_id", p.User.ID)
+	pipe.HSet(key, "body", p.Body)
+	pipe.HSet(key, "media_id", p.MediaID)
 	pipe.HSet(key, "created_at", now)
 	pipe.HSet(key, "updated_at", now)
 	pipe.LPush("posts", id)
-	pipe.LPush(fmt.Sprintf("user:%d:posts", userID), id)
+	pipe.LPush(fmt.Sprintf("user:%d:posts", p.ID), id)
 	_, err = pipe.Exec()
 	if err != nil {
 		return nil, err
@@ -118,12 +126,20 @@ func GetPosts(c redis.Cmdable, userID int64) ([]*Post, error) {
 	return queryPosts(c, key)
 }
 
-// PostUpdate adds a new update
-func PostUpdate(c redis.Cmdable, userID int64, body string) error {
+// PostUpdate adds a new update; this differs from edit which actually changes
+func PostUpdate(c redis.Cmdable, userID int64, body, mediaID string) error {
 	if body == "" {
-		return ErrEmptyForm
+		if mediaID == "" {
+			return ErrEmptyForm
+		}
 	}
 
-	_, err := AddPost(c, userID, body)
+	p := pensive.Post{
+		User:    pensive.User{ID: userID},
+		Body:    body,
+		MediaID: mediaID,
+	}
+
+	_, err := AddPost(c, p)
 	return err
 }

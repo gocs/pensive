@@ -1,6 +1,25 @@
 version: "3"
 
 services:
+  app:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+      - prometheus
+      - grafana
+      - seaweedfs
+    environment:
+      SESSION_KEY: "${SESSION_KEY}"
+      REDIS_ADDR: "${REDIS_ADDR}" # example: redis:6379
+      REDIS_PASSWORD: "${REDIS_PASSWORD}"
+      SEAWEED_SERVER_ADDR: "${SEAWEED_SERVER_ADDR}"
+    networks:
+      - backend
+
   redis:
     image: 'redis:6.0-alpine'
     restart: unless-stopped
@@ -10,18 +29,13 @@ services:
     networks:
       - backend
 
-  app:
-    build: .
+  seaweedfs:
+    build:
+      context: ./
+      dockerfile: Dockerfile.weed
     ports:
       - "8080:8080"
-    depends_on:
-      - redis
-      - prometheus
-      - grafana
-    environment:
-      SESSION_KEY: "${SESSION_KEY}"
-      REDIS_ADDR: "${REDIS_ADDR}" # example: redis:6379
-      REDIS_PASSWORD: "${REDIS_PASSWORD}"
+      - "9333:9333"
     networks:
       - backend
 

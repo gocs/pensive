@@ -1,9 +1,6 @@
-FROM golang:alpine3.12 as build
+FROM alpine
 
-WORKDIR /src
-COPY . /src
+COPY ./app ./
 
-RUN go build -o app ./cmd/main.go
-
-EXPOSE 8080
-ENTRYPOINT [ "./app" ]
+EXPOSE 8000
+ENTRYPOINT ["./app"]

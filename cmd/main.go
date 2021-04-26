@@ -15,13 +15,17 @@ func main() {
 	redisAddr := getEnv("REDIS_ADDR", "localhost:6380")
 	// sets the redis password
 	redisPassword := getEnv("REDIS_PASSWORD", "")
+	// sets the file store assign address
+	weedAddr := getEnv("SEAWEED_SERVER_ADDR", "http://seaweedfs:9333")
+	// sets the file store upload address
+	weedUpAddr := getEnv("SEAWEED_UPLOAD_ADDR", "http://seaweedfs:8080")
 
-	r, err := router.New(session, redisAddr, redisPassword)
+	r, err := router.New(session, redisAddr, redisPassword, weedAddr, weedUpAddr)
 	if err != nil {
 		log.Fatal(err)
 	}
 	http.Handle("/", r)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(":8000", nil))
 }
 
 func getEnv(key, defaultValue string) string {
