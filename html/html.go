@@ -23,7 +23,7 @@ import (
 	"io"
 	"text/template"
 
-	"github.com/gocs/pensive/pkg/manager"
+	"github.com/gocs/pensive/internal/manager"
 )
 
 //go:embed *
@@ -47,6 +47,7 @@ type HomeParams struct {
 	Title       string
 	Name        string
 	DisplayForm bool
+	MediaAddr   string
 	Posts       []*manager.Post
 }
 

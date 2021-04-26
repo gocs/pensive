@@ -1,18 +1,22 @@
 package router
 
 import (
+	"fmt"
+	"io"
 	"log"
 	"net/http"
 
 	"github.com/go-redis/redis"
 	"github.com/gocs/pensive/html"
-	"github.com/gocs/pensive/pkg/manager"
-	sessions "github.com/gocs/pensive/pkg/session"
+	"github.com/gocs/pensive/internal/manager"
+	sessions "github.com/gocs/pensive/internal/session"
+
+	"github.com/gocs/pensive/pkg/store"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-func New(sessionKey, redisAddr, redisPassword string) (*mux.Router, error) {
+func New(sessionKey, redisAddr, redisPassword, weedAddr, weedUpAddr string) (*mux.Router, error) {
 	r := mux.NewRouter()
 
 	c, err := manager.NewManager(redisAddr, redisPassword)
@@ -23,7 +27,7 @@ func New(sessionKey, redisAddr, redisPassword string) (*mux.Router, error) {
 	s := sessions.New(sessionKey, "session")
 
 	// handler controllers
-	a := App{client: c.Cmdable, session: s}
+	a := App{client: c.Cmdable, session: s, weedAddr: weedAddr, weedUpAddr: weedUpAddr}
 	ul := UserLogin{client: c.Cmdable, session: s}
 	ur := UserRegister{client: c.Cmdable, session: s}
 	us := UserSettings{client: c.Cmdable, session: s}
@@ -59,8 +63,10 @@ func New(sessionKey, redisAddr, redisPassword string) (*mux.Router, error) {
 
 // App is the struct for the homepage or the user profile homepage
 type App struct {
-	client  redis.Cmdable
-	session *sessions.Session
+	client     redis.Cmdable
+	session    *sessions.Session
+	weedAddr   string
+	weedUpAddr string
 }
 
 const (
@@ -68,7 +74,7 @@ const (
 )
 
 func logErr(w http.ResponseWriter, err ...interface{}) {
-	log.Println("err:", err)
+	log.Println(err...)
 }
 
 func (a *App) home(w http.ResponseWriter, r *http.Request) {
@@ -96,6 +102,7 @@ func (a *App) home(w http.ResponseWriter, r *http.Request) {
 		Name:        u.Username,
 		DisplayForm: true,
 		Posts:       posts,
+		MediaAddr:   a.weedUpAddr,
 	}
 	html.Home(w, p)
 }
@@ -109,10 +116,33 @@ func (a *App) homePost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userID := self.ID()
+	fid := ""
 
-	r.ParseForm()
-	body := r.PostForm.Get("post")
-	if err := manager.PostUpdate(a.client, userID, body); err != nil {
+	body := r.FormValue("post")
+	mf, _, err := r.FormFile("media-source")
+	if err == nil {
+		defer mf.Close()
+		assignResp, err := store.Assign(a.weedAddr)
+		if err != nil {
+			logErr(w, "Assign err:", err)
+			return
+		}
+
+		fid = assignResp.Fid
+		form := map[string]io.Reader{"media-source": mf}
+
+		if _, err := store.Upload(fmt.Sprintf("%s/%s", a.weedUpAddr, fid), form); err != nil {
+			logErr(w, "Upload err:", err)
+			return
+		}
+	} else if err == http.ErrMissingFile {
+		logErr(w, "FormFile skip:", err)
+	} else {
+		logErr(w, "FormFile err:", err)
+		return
+	}
+
+	if err := manager.PostUpdate(a.client, userID, body, fid); err != nil {
 		logErr(w, "PostUpdate err:", err)
 		return
 	}

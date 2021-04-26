@@ -20,3 +20,6 @@
 # ignore private as it is private
 private
 .env
+
+# ignore output file/binary
+app

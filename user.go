@@ -7,12 +7,14 @@ import (
 )
 
 type User struct {
-	ID        int64
-	Username  string
-	Hash      []byte
-	Email     string
-	CreatedAt *time.Time
-	UpdatedAt *time.Time
+	ID       int64  // required, nonzero
+	Username string // required, nonzero
+	Hash     []byte // required, nonzero
+	Email    string // required, nonzero
+
+	// do not manually fill-in the ff.
+	CreatedAt *time.Time // required, nonzero
+	UpdatedAt *time.Time // required, nonzero
 }
 
 func ValidatePassword(hash string) ([]byte, error) {
