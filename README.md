@@ -7,8 +7,6 @@
 docker
 golang
 redis
-prometheus
-graphana
 
 rename `.env copy` to `.env`
 
