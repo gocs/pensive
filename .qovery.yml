@@ -1,0 +1,15 @@
+---
+application:
+  name: "pensive"
+  project: "poggers"
+  organization: "QoveryCommunity"
+databases:
+- type: "REDIS"
+  name: "poggers"
+  version: "5"
+routers:
+- name: "main-pensive"
+  routes:
+  - application_name: "pensive"
+    paths:
+    - "/*"
