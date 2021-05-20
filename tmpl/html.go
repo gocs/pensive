@@ -16,31 +16,31 @@
 //	func <template-name-capitalized>(w io.Writer, p <template-name-capitalized>Params) error {
 //		return <template-name-lowercase>.Execute(w, p)
 //	}
-package html
+package tmpl
 
 import (
 	"embed"
 	"io"
-	"text/template"
+	"html/template"
 
 	"github.com/gocs/pensive/internal/manager"
 )
 
-//go:embed *
-var files embed.FS
+//go:embed html
+var html embed.FS
 
 var (
-	home         = parse("home.html")
-	userLogin    = parse("user/login.html")
-	userRegister = parse("user/register.html")
-	settings     = parse("user/settings.html")
-	profile      = parse("user/settings/profile.html")
-	privacy      = parse("user/settings/privacy.html")
-	account      = parse("user/settings/account.html")
+	home         = parse("html/home.html")
+	userLogin    = parse("html/user/login.html")
+	userRegister = parse("html/user/register.html")
+	settings     = parse("html/user/settings.html")
+	profile      = parse("html/user/settings/profile.html")
+	privacy      = parse("html/user/settings/privacy.html")
+	account      = parse("html/user/settings/account.html")
 )
 
 func parse(file string) *template.Template {
-	return template.Must(template.New("layout.html").ParseFS(files, "layout.html", file))
+	return template.Must(template.New("layout.html").ParseFS(html, "html/layout.html", file))
 }
 
 type HomeParams struct {
@@ -51,21 +51,15 @@ type HomeParams struct {
 	Posts       []*manager.Post
 }
 
-func Home(w io.Writer, p HomeParams) error {
-	return home.Execute(w, p)
-}
+func Home(w io.Writer, p HomeParams) error { return home.Execute(w, p) }
 
 type UserLoginParams struct{}
 
-func UserLogin(w io.Writer, p UserLoginParams) error {
-	return userLogin.Execute(w, p)
-}
+func UserLogin(w io.Writer, p UserLoginParams) error { return userLogin.Execute(w, p) }
 
 type UserRegisterParams struct{}
 
-func UserRegister(w io.Writer, p UserRegisterParams) error {
-	return userRegister.Execute(w, p)
-}
+func UserRegister(w io.Writer, p UserRegisterParams) error { return userRegister.Execute(w, p) }
 
 type SettingsParams struct {
 	Title string
@@ -73,9 +67,7 @@ type SettingsParams struct {
 	User  *manager.User
 }
 
-func Settings(w io.Writer, p SettingsParams) error {
-	return settings.Execute(w, p)
-}
+func Settings(w io.Writer, p SettingsParams) error { return settings.Execute(w, p) }
 
 type ProfileParams struct {
 	Title string
@@ -83,9 +75,7 @@ type ProfileParams struct {
 	User  *manager.User
 }
 
-func Profile(w io.Writer, p ProfileParams) error {
-	return profile.Execute(w, p)
-}
+func Profile(w io.Writer, p ProfileParams) error { return profile.Execute(w, p) }
 
 type PrivacyParams struct {
 	Title string
@@ -93,9 +83,7 @@ type PrivacyParams struct {
 	User  *manager.User
 }
 
-func Privacy(w io.Writer, p PrivacyParams) error {
-	return privacy.Execute(w, p)
-}
+func Privacy(w io.Writer, p PrivacyParams) error { return privacy.Execute(w, p) }
 
 type AccountParams struct {
 	Title string
@@ -103,6 +91,4 @@ type AccountParams struct {
 	User  *manager.User
 }
 
-func Account(w io.Writer, p AccountParams) error {
-	return account.Execute(w, p)
-}
+func Account(w io.Writer, p AccountParams) error { return account.Execute(w, p) }

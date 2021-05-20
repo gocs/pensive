@@ -1,12 +1,16 @@
 package main
 
 import (
+	"embed"
 	"log"
 	"net/http"
 	"os"
 
 	"github.com/gocs/pensive/internal/router"
 )
+
+//go:embed assets
+var assets embed.FS
 
 func main() {
 	// sets the session cookie store key
@@ -24,6 +28,10 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	// css and js files
+	fs := http.FileServer(http.FS(assets))
+	http.Handle("/static/", http.StripPrefix("/static/", fs))
 	http.Handle("/", r)
 	log.Fatal(http.ListenAndServe(":8000", nil))
 }
