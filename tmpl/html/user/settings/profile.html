@@ -9,11 +9,15 @@
 {{define "body"}}
 <header>
     <nav>
-        <div><a href="/">home</a></div>
-        {{if .Name}}
-        <div><a href="/@{{.Name}}">@{{.Name}}</a></div>{{end}}
-        <div><a href="/settings">settings</a></div>
-        <form action="/logout" method="post"><button>leave</button></form>
+        <ul class="nav justify-content-center">
+            <li class="nav-item"><a class="nav-link active" aria-current="page" href="#">Active</a></li>
+            <li class="nav-item"><a href="/">home</a></li>
+            <li class="nav-item">{{if .Name}}<a href="/@{{.Name}}">@{{.Name}}</a>{{end}}</li>
+            <li class="nav-item"><a href="/settings">settings</a></li>
+            <li class="nav-item"><form action="/logout" method="post"><button>leave</button></form>
+                <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">Disabled</a>
+            </li>
+        </ul>
     </nav>
 </header>
 <main>
@@ -29,7 +33,7 @@
             </ul>
         </div>
         <form method="post">
-            <div>Email: <input type="email" name="email" value="{{.User.Email}}" required></div>
+            <div>Username: <input type="text" name="username" value="{{.User.Username}}" required></div>
             <!-- allow auto-complete -->
             <div>Confirm Password: <input type="password" name="password" value=""></div>
             <div><button type="submit">Update</button></div>

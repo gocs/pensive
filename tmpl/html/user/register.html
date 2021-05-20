@@ -1,0 +1,37 @@
+<!-- This defines the head tag context -->
+{{define "head"}}
+<header class="container">
+    <title>pensive/register</title>
+</header>
+{{end}}
+
+<!-- This defines the body tag context -->
+{{define "body"}}
+<main class="container">
+    <div class="position-absolute top-50 start-50 translate-middle" style="width: 500px;">
+        <form method="post">
+            <div class="mb-3">
+                <label for="username" class="col-sm-3 form-label">Username</label>
+                <input type="text" id="username" class="col-sm-7" name="username">
+            </div>
+            <div class="mb-3">
+                <label for="password" class="col-sm-3 form-label">Password</label>
+                <input type="password" id="password" class="col-sm-7" name="password">
+            </div>
+            <div class="mb-3">
+                <label for="confirmpass" class="col-sm-3 form-label">Confirm Password</label>
+                <input type="password" id="confirmpass" class="col-sm-7" name="confirmpass">
+            </div>
+            <div class="mb-3">
+                <label for="email" class="col-sm-3 form-label">Email</label>
+                <input type="email" id="email" class="col-sm-7" name="email">
+            </div>
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="exampleCheck1">
+                <label class="form-check-label" for="exampleCheck1">Check me out</label>
+            </div>
+            <div><button type="submit" class="btn btn-primary">Register</button></div>
+        </form>
+    </div>
+</main>
+{{end}}

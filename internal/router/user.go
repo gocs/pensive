@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/go-redis/redis"
-	"github.com/gocs/pensive/html"
+	"github.com/gocs/pensive/tmpl"
 	"github.com/gocs/pensive/pkg/validator"
 	"github.com/gocs/pensive/internal/manager"
 	sessions "github.com/gocs/pensive/internal/session"
@@ -22,13 +22,13 @@ func (ul *UserLogin) Get(w http.ResponseWriter, r *http.Request) {
 	// clear session if this handler is reached
 	if err := ul.session.UnSet(w, r, UserIDSession); err != nil {
 		logErr(w, "UnSet err:", err)
-		html.UserLogin(w, html.UserLoginParams{})
+		tmpl.UserLogin(w, tmpl.UserLoginParams{})
 		return
 	}
 
 	if _, err := manager.AuthSelf(r, ul.session, ul.client, UserIDSession); err != nil {
 		logErr(w, "AuthSelf err:", err)
-		html.UserLogin(w, html.UserLoginParams{})
+		tmpl.UserLogin(w, tmpl.UserLoginParams{})
 		return
 	}
 
@@ -67,7 +67,7 @@ type UserRegister struct {
 func (ur *UserRegister) Get(w http.ResponseWriter, r *http.Request) {
 	if _, err := manager.AuthSelf(r, ur.session, ur.client, UserIDSession); err != nil {
 		logErr(w, "AuthSelf err:", err)
-		html.UserRegister(w, html.UserRegisterParams{})
+		tmpl.UserRegister(w, tmpl.UserRegisterParams{})
 		return
 	}
 
@@ -136,12 +136,12 @@ func (us *UserSettings) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	p := html.SettingsParams{
+	p := tmpl.SettingsParams{
 		Title: "Settings",
 		Name:  u.Username,
 		User:  user,
 	}
-	html.Settings(w, p)
+	tmpl.Settings(w, p)
 }
 
 func (us *UserSettings) GetProfile(w http.ResponseWriter, r *http.Request) {
@@ -157,12 +157,12 @@ func (us *UserSettings) GetProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	p := html.ProfileParams{
+	p := tmpl.ProfileParams{
 		Title: "Profile",
 		Name:  u.Username,
 		User:  user,
 	}
-	html.Profile(w, p)
+	tmpl.Profile(w, p)
 }
 
 func (us *UserSettings) SetProfile(w http.ResponseWriter, r *http.Request) {
@@ -202,12 +202,12 @@ func (us *UserSettings) GetPrivacy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	p := html.PrivacyParams{
+	p := tmpl.PrivacyParams{
 		Title: "Privacy",
 		Name:  u.Username,
 		User:  user,
 	}
-	html.Privacy(w, p)
+	tmpl.Privacy(w, p)
 }
 
 func (us *UserSettings) SetPrivacy(w http.ResponseWriter, r *http.Request) {
@@ -263,12 +263,12 @@ func (us *UserSettings) GetAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	p := html.AccountParams{
+	p := tmpl.AccountParams{
 		Title: "Account",
 		Name:  u.Username,
 		User:  user,
 	}
-	html.Account(w, p)
+	tmpl.Account(w, p)
 }
 
 func (us *UserSettings) SetAccount(w http.ResponseWriter, r *http.Request) {
