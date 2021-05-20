@@ -8,9 +8,9 @@ import (
 	"strings"
 
 	"github.com/go-redis/redis"
-	"github.com/gocs/pensive/html"
 	"github.com/gocs/pensive/internal/manager"
 	sessions "github.com/gocs/pensive/internal/session"
+	"github.com/gocs/pensive/tmpl"
 
 	"github.com/gocs/pensive/pkg/store"
 	"github.com/gorilla/mux"
@@ -98,14 +98,14 @@ func (a *App) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	p := html.HomeParams{
+	p := tmpl.HomeParams{
 		Title:       "Posts",
 		Name:        u.Username,
 		DisplayForm: true,
 		Posts:       posts,
 		MediaAddr:   a.weedUpAddr,
 	}
-	html.Home(w, p)
+	tmpl.Home(w, p)
 }
 
 func (a *App) homePost(w http.ResponseWriter, r *http.Request) {
@@ -185,10 +185,10 @@ func (a *App) profile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	p := html.HomeParams{
+	p := tmpl.HomeParams{
 		Title:       "Posts",
 		DisplayForm: true,
 		Posts:       posts,
 	}
-	html.Home(w, p)
+	tmpl.Home(w, p)
 }
