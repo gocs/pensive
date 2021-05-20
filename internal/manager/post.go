@@ -89,7 +89,7 @@ func AddPost(c redis.Cmdable, p pensive.Post) (*Post, error) {
 	pipe.HSet(key, "created_at", now)
 	pipe.HSet(key, "updated_at", now)
 	pipe.LPush("posts", id)
-	pipe.LPush(fmt.Sprintf("user:%d:posts", p.ID), id)
+	pipe.LPush(fmt.Sprintf("user:%d:posts", p.User.ID), id)
 	_, err = pipe.Exec()
 	if err != nil {
 		return nil, err
