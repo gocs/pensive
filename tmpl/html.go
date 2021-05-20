@@ -20,14 +20,18 @@ package tmpl
 
 import (
 	"embed"
-	"io"
 	"html/template"
+	"io"
+	"net/http"
 
 	"github.com/gocs/pensive/internal/manager"
 )
 
 //go:embed html
 var html embed.FS
+
+//go:embed assets
+var assets embed.FS
 
 var (
 	home         = parse("html/home.html")
@@ -92,3 +96,9 @@ type AccountParams struct {
 }
 
 func Account(w io.Writer, p AccountParams) error { return account.Execute(w, p) }
+
+func AssetsFS() http.Handler {
+	// css and js files
+	fs := http.FileServer(http.FS(assets))
+	return http.StripPrefix("/static/", fs)
+}

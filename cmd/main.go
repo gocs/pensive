@@ -1,16 +1,13 @@
 package main
 
 import (
-	"embed"
 	"log"
 	"net/http"
 	"os"
 
 	"github.com/gocs/pensive/internal/router"
+	"github.com/gocs/pensive/tmpl"
 )
-
-//go:embed assets
-var assets embed.FS
 
 func main() {
 	// sets the session cookie store key
@@ -29,9 +26,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// css and js files
-	fs := http.FileServer(http.FS(assets))
-	http.Handle("/static/", http.StripPrefix("/static/", fs))
+	http.Handle("/static/", tmpl.AssetsFS())
 	http.Handle("/", r)
 	log.Fatal(http.ListenAndServe(":8000", nil))
 }
