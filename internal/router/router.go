@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/go-redis/redis"
 	"github.com/gocs/pensive/html"
@@ -125,6 +126,7 @@ func (a *App) homePost(w http.ResponseWriter, r *http.Request) {
 		assignResp, err := store.Assign(a.weedAddr)
 		if err != nil {
 			logErr(w, "Assign err:", err)
+			http.Redirect(w, r, "/", http.StatusFound)
 			return
 		}
 
@@ -133,17 +135,20 @@ func (a *App) homePost(w http.ResponseWriter, r *http.Request) {
 
 		if _, err := store.Upload(fmt.Sprintf("%s/%s", a.weedUpAddr, fid), form); err != nil {
 			logErr(w, "Upload err:", err)
+			http.Redirect(w, r, "/", http.StatusFound)
 			return
 		}
 	} else if err == http.ErrMissingFile {
 		logErr(w, "FormFile skip:", err)
 	} else {
 		logErr(w, "FormFile err:", err)
+		http.Redirect(w, r, "/", http.StatusFound)
 		return
 	}
 
 	if err := manager.PostUpdate(a.client, userID, body, fid); err != nil {
 		logErr(w, "PostUpdate err:", err)
+		http.Redirect(w, r, "/", http.StatusFound)
 		return
 	}
 	http.Redirect(w, r, "/", http.StatusFound)
@@ -159,14 +164,17 @@ func (a *App) profile(w http.ResponseWriter, r *http.Request) {
 
 	vars := mux.Vars(r)
 	username := vars["username"]
-	user, err := manager.GetUserByName(a.client, username)
+	usernameT := strings.Trim(username, "@")
+	user, err := manager.GetUserByName(a.client, usernameT)
 	if err != nil {
+		logErr(w, "GetUserByName err:", err)
 		http.Redirect(w, r, "/", http.StatusFound)
 		return
 	}
 
 	u, err := manager.GetUser(a.client, user)
 	if err != nil {
+		logErr(w, "GetUser err:", err)
 		http.Redirect(w, r, "/", http.StatusFound)
 		return
 	}

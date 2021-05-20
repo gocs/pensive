@@ -30,7 +30,7 @@
     {{range .Posts}}
     <div>
         <div>
-            <strong><a href="/{{.User.Username}}">{{.User.Username}}</a> wrote:</strong>
+            <strong><a href="/@{{.User.Username}}">@{{.User.Username}}</a>:</strong>
         </div>
         <div>{{.Body}}</div>
         {{if .MediaID}}<div><img src="http://localhost:8080/{{.MediaID}}" alt=""></div>{{end}}
