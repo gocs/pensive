@@ -79,16 +79,10 @@ func logErr(w http.ResponseWriter, err ...interface{}) {
 }
 
 func (a *App) home(w http.ResponseWriter, r *http.Request) {
-	self, err := manager.AuthSelf(r, a.session, a.client, UserIDSession)
+	_, err := manager.AuthSelf(r, a.session, a.client, UserIDSession)
 	if err != nil {
 		log.Println("unauthorized:", err)
 		http.Redirect(w, r, "/login", http.StatusFound)
-		return
-	}
-
-	u, err := manager.GetUser(a.client, self)
-	if err != nil {
-		logErr(w, "GetUser err:", err)
 		return
 	}
 
@@ -100,7 +94,6 @@ func (a *App) home(w http.ResponseWriter, r *http.Request) {
 
 	p := tmpl.HomeParams{
 		Title:       "Posts",
-		Name:        u.Username,
 		DisplayForm: true,
 		Posts:       posts,
 		MediaAddr:   a.weedUpAddr,
@@ -187,6 +180,7 @@ func (a *App) profile(w http.ResponseWriter, r *http.Request) {
 
 	p := tmpl.HomeParams{
 		Title:       "Posts",
+		Name:        fmt.Sprint("@", u.Username),
 		DisplayForm: true,
 		Posts:       posts,
 	}
