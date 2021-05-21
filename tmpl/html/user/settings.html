@@ -7,19 +7,7 @@
 
 <!-- This defines the body tag context -->
 {{define "body"}}
-<header>
-    <nav>
-        <ul class="nav justify-content-center">
-            <li class="nav-item"><a class="nav-link active" aria-current="page" href="#">Active</a></li>
-            <li class="nav-item"><a href="/">home</a></li>
-            <li class="nav-item">{{if .Name}}<a href="/@{{.Name}}">@{{.Name}}</a>{{end}}</li>
-            <li class="nav-item"><a href="/settings">settings</a></li>
-            <li class="nav-item"><form action="/logout" method="post"><button>leave</button></form>
-                <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">Disabled</a>
-            </li>
-        </ul>
-    </nav>
-</header>
+{{block "header" .}}{{end}}
 <main>
     <h1>{{.Title}}</h1>
 
