@@ -44,7 +44,10 @@ var (
 )
 
 func parse(file string) *template.Template {
-	return template.Must(template.New("layout.html").ParseFS(html, "html/layout.html", file))
+	return template.Must(template.New("layout.html").ParseFS(html,
+		"html/layout.html",
+		"html/header.html",
+		file))
 }
 
 type HomeParams struct {
