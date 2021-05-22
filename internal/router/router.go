@@ -17,7 +17,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-func New(sessionKey, redisAddr, redisPassword, weedAddr, weedUpAddr string) (*mux.Router, error) {
+func New(sessionKey, redisAddr, redisPassword, weedAddr, weedUpAddr, weedUpIP string) (*mux.Router, error) {
 	r := mux.NewRouter()
 
 	c, err := manager.NewManager(redisAddr, redisPassword)
@@ -28,7 +28,12 @@ func New(sessionKey, redisAddr, redisPassword, weedAddr, weedUpAddr string) (*mu
 	s := sessions.New(sessionKey, "session")
 
 	// handler controllers
-	a := App{client: c.Cmdable, session: s, weedAddr: weedAddr, weedUpAddr: weedUpAddr}
+	a := App{
+		client:     c.Cmdable,
+		session:    s,
+		weedAddr:   weedAddr,
+		weedUpAddr: weedUpAddr,
+		weedUpIP:   weedUpIP}
 	ul := UserLogin{client: c.Cmdable, session: s}
 	ur := UserRegister{client: c.Cmdable, session: s}
 	us := UserSettings{client: c.Cmdable, session: s}
@@ -68,6 +73,7 @@ type App struct {
 	session    *sessions.Session
 	weedAddr   string
 	weedUpAddr string
+	weedUpIP   string
 }
 
 const (
@@ -98,14 +104,12 @@ func (a *App) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Println("a.weedUpAddr:", a.weedUpAddr)
-
 	p := tmpl.HomeParams{
 		Title:       "Posts",
 		DisplayForm: true,
 		Name:        fmt.Sprint("@", u.Username),
 		Posts:       posts,
-		MediaAddr:   a.weedUpAddr,
+		MediaIP:     a.weedUpIP,
 	}
 	tmpl.Home(w, p)
 }
@@ -191,7 +195,7 @@ func (a *App) profile(w http.ResponseWriter, r *http.Request) {
 		Title:       "Posts",
 		Name:        fmt.Sprint("@", u.Username),
 		DisplayForm: true,
-		MediaAddr:   a.weedUpAddr,
+		MediaIP:     a.weedUpIP,
 		Posts:       posts,
 	}
 	tmpl.Home(w, p)

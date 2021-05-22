@@ -54,7 +54,7 @@ type HomeParams struct {
 	Title       string
 	Name        string
 	DisplayForm bool
-	MediaAddr   string
+	MediaIP   string
 	Posts       []*manager.Post
 }
 
