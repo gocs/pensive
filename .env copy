@@ -6,3 +6,4 @@ REDIS_PASSWORD="struct256_Type"
 
 SEAWEED_SERVER_ADDR=http://seaweedfs:9333
 SEAWEED_UPLOAD_ADDR=http://seaweedfs:8080
+SEAWEED_UPLOAD_IP=http://localhost:8080

@@ -20,8 +20,8 @@ func main() {
 	weedAddr := getEnv("SEAWEED_SERVER_ADDR", "http://seaweedfs:9333")
 	// sets the file store upload address
 	weedUpAddr := getEnv("SEAWEED_UPLOAD_ADDR", "http://seaweedfs:8080")
-	// sets the file store upload address
-	weedUpIP := getEnv("SEAWEED_UPLOAD_IP", "127.0.0.1")
+	// sets the file store upload ip
+	weedUpIP := getEnv("SEAWEED_UPLOAD_IP", "http://127.0.0.1:8080")
 
 	r, err := router.New(
 		session,

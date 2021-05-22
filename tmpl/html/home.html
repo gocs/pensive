@@ -23,14 +23,14 @@
     </div>
     {{end}}
 
-    {{ $addr := .MediaIP}}
+    {{$addr := .MediaIP}}
     {{range .Posts}}
     <div>
         <div>
             <strong><a href="/@{{.User.Username}}">@{{.User.Username}}</a>:</strong>
         </div>
         <div>{{.Body}}</div>
-        {{if .MediaID}}<div><img src="http://{{$addr}}:8080/{{.MediaID}}" alt="it doesn't show up, contact admin"></div>{{end}}
+        {{if .MediaID}}<div><img src="{{$addr}}/{{.MediaID}}" alt="it doesn't show up, contact admin"></div>{{end}}
     </div>
     {{end}}
 </main>

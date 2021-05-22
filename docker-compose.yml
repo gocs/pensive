@@ -17,6 +17,7 @@ services:
       REDIS_ADDR: "${REDIS_ADDR}" # example: redis:6379
       REDIS_PASSWORD: "${REDIS_PASSWORD}"
       SEAWEED_SERVER_ADDR: "${SEAWEED_SERVER_ADDR}"
+      SEAWEED_UPLOAD_IP: "${SEAWEED_UPLOAD_IP}"
     networks:
       - backend
 
