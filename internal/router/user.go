@@ -1,13 +1,14 @@
 package router
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/go-redis/redis"
-	"github.com/gocs/pensive/tmpl"
-	"github.com/gocs/pensive/pkg/validator"
 	"github.com/gocs/pensive/internal/manager"
 	sessions "github.com/gocs/pensive/internal/session"
+	"github.com/gocs/pensive/pkg/validator"
+	"github.com/gocs/pensive/tmpl"
 )
 
 // UserLogin specific handler group for user interactions
@@ -138,7 +139,7 @@ func (us *UserSettings) Get(w http.ResponseWriter, r *http.Request) {
 
 	p := tmpl.SettingsParams{
 		Title: "Settings",
-		Name:  u.Username,
+		Name:  fmt.Sprint("@", u.Username),
 		User:  user,
 	}
 	tmpl.Settings(w, p)
@@ -159,7 +160,7 @@ func (us *UserSettings) GetProfile(w http.ResponseWriter, r *http.Request) {
 
 	p := tmpl.ProfileParams{
 		Title: "Profile",
-		Name:  u.Username,
+		Name:  fmt.Sprint("@", u.Username),
 		User:  user,
 	}
 	tmpl.Profile(w, p)
@@ -204,7 +205,7 @@ func (us *UserSettings) GetPrivacy(w http.ResponseWriter, r *http.Request) {
 
 	p := tmpl.PrivacyParams{
 		Title: "Privacy",
-		Name:  u.Username,
+		Name:  fmt.Sprint("@", u.Username),
 		User:  user,
 	}
 	tmpl.Privacy(w, p)
@@ -265,7 +266,7 @@ func (us *UserSettings) GetAccount(w http.ResponseWriter, r *http.Request) {
 
 	p := tmpl.AccountParams{
 		Title: "Account",
-		Name:  u.Username,
+		Name:  fmt.Sprint("@", u.Username),
 		User:  user,
 	}
 	tmpl.Account(w, p)

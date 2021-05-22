@@ -8,7 +8,7 @@
 <!-- This defines the body tag context -->
 {{define "body"}}
 {{block "header" .}}{{end}}
-<main class="container">
+<main class="container mt-5 pt-5">
     <h1>{{.Title}}</h1>
 
     {{if .DisplayForm}}
@@ -17,18 +17,19 @@
             <div class="input-group mb-3">
                 <input type="text" name="post" aria-label="Post" class="form-control">
                 <input type="file" name="media-source" aria-label="Media source" class="form-control" accept="audio/*,video/*,image/*">
-                <button type="submit" class="btn btn-outline-secondary">Submit</button>
+                <button type="submit" class="btn btn-secondary">Submit</button>
             </div>
         </form>
     </div>
     {{end}}
+    {{ $addr := .MediaAddr}}
     {{range .Posts}}
     <div>
         <div>
             <strong><a href="/@{{.User.Username}}">@{{.User.Username}}</a>:</strong>
         </div>
         <div>{{.Body}}</div>
-        {{if .MediaID}}<div><img src="http://localhost:8080/{{.MediaID}}" alt=""></div>{{end}}
+        {{if .MediaID}}<div><img src="http://127.0.0.1:8080/{{.MediaID}}" alt="it doesn't show"></div>{{end}}
     </div>
     {{end}}
 </main>

@@ -8,7 +8,7 @@
 <!-- This defines the body tag context -->
 {{define "body"}}
 {{block "header" .}}{{end}}
-<main>
+<main class="container mt-5 pt-5">
     <h1>{{.Title}}</h1>
 
     <div>
@@ -21,10 +21,19 @@
             </ul>
         </div>
         <form method="post">
-            <div>Old Password (required): <input type="password" name="old_password" value="" required></div>
-            <div>New Password: <input type="password" name="new_password" value=""></div>
-            <div>Confirm New Password: <input type="password" name="conf_password" value="" autocomplete="off"></div>
-            <div><button type="submit">Update</button></div>
+            <div class="mb-3">
+                <label for="old_password" class="col-sm-4 form-label">Old Password (required)</label>
+                <input type="password" id="old_password" class="col-sm-8" name="old_password" value="" required>
+            </div>
+            <div class="mb-3">
+                <label for="new_password" class="col-sm-4 form-label">New Password</label>
+                <input type="password" id="new_password" class="col-sm-8" name="new_password" value="">
+            </div>
+            <div class="mb-3">
+                <label for="conf_password" class="col-sm-4 form-label">Confirm New Password</label>
+                <input type="password" id="conf_password" class="col-sm-8" name="conf_password" value="" autocomplete="off">
+            </div>
+            <div><button type="submit" class="btn btn-primary">Update</button></div>
         </form>
     </div>
 </main>

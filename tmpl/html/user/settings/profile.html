@@ -8,7 +8,7 @@
 <!-- This defines the body tag context -->
 {{define "body"}}
 {{block "header" .}}{{end}}
-<main>
+<main class="container mt-5 pt-5">
     <h1>{{.Title}}</h1>
 
     <div>
@@ -21,10 +21,16 @@
             </ul>
         </div>
         <form method="post">
-            <div>Username: <input type="text" name="username" value="{{.User.Username}}" required></div>
+            <div class="mb-3">
+                <label for="username" class="col-sm-4 form-label">Username</label>
+                <input type="text" id="username" class="col-sm-8" name="username" value="{{.User.Username}}" required>
+            </div>
             <!-- allow auto-complete -->
-            <div>Confirm Password: <input type="password" name="password" value=""></div>
-            <div><button type="submit">Update</button></div>
+            <div class="mb-3">
+                <label for="password" class="col-sm-4 form-label">Confirm Password</label>
+                <input type="password" id="password" class="col-sm-8" name="password" value="">
+            </div>
+            <div><button type="submit" class="btn btn-primary">Update</button></div>
         </form>
     </div>
 </main>
