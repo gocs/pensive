@@ -12,4 +12,10 @@ rename `.env copy` to `.env`
 
 ## run docker
 
-`make reload`
+```make reload```
+
+see `Makefile for other commands`..
+
+## license
+
+`Apache 2.0`
