@@ -8,8 +8,11 @@ require (
 	github.com/dghubble/oauth1 v0.6.0
 	github.com/dghubble/sessions v0.1.0
 	github.com/go-redis/redis v6.15.9+incompatible
+	github.com/gocs/errored v1.0.0
+	github.com/golang-jwt/jwt/v4 v4.1.0
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/sessions v1.2.1
+	github.com/joho/godotenv v1.4.0
 	github.com/onsi/ginkgo v1.15.1 // indirect
 	github.com/onsi/gomega v1.11.0 // indirect
 	github.com/prometheus/client_golang v1.10.0
