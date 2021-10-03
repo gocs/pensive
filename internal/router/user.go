@@ -5,8 +5,12 @@ import (
 	"net/http"
 
 	"github.com/go-redis/redis"
+	"github.com/gocs/errored"
 	"github.com/gocs/pensive/internal/manager"
 	sessions "github.com/gocs/pensive/internal/session"
+
+	"github.com/gocs/pensive/pkg/mail"
+	"github.com/gocs/pensive/pkg/token"
 	"github.com/gocs/pensive/pkg/validator"
 	"github.com/gocs/pensive/tmpl"
 )
@@ -99,6 +103,8 @@ func (ur *UserRegister) Post(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// send email verification and go back to login
+	// http.Redirect(w, r, "/verify", http.StatusFound)
 	http.Redirect(w, r, "/login", http.StatusFound)
 }
 
@@ -120,8 +126,11 @@ func (a *App) userLogout(w http.ResponseWriter, r *http.Request) {
 
 // UserSettings this is created so that the error field has few accessors; not that unique to App
 type UserSettings struct {
-	client  redis.Cmdable
-	session *sessions.Session
+	client       redis.Cmdable
+	session      *sessions.Session
+	fromEmail    string
+	password     string
+	accessSecret string
 }
 
 func (us *UserSettings) Get(w http.ResponseWriter, r *http.Request) {
@@ -294,4 +303,121 @@ func (us *UserSettings) SetAccount(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Redirect(w, r, "/settings/account", http.StatusFound)
+}
+
+func (us *UserSettings) VerifyEmail(w http.ResponseWriter, r *http.Request) {
+	user, err := manager.AuthSelf(r, us.session, us.client, UserIDSession)
+	if err != nil {
+		logErr(w, "AuthSelf err:", err)
+		http.Redirect(w, r, r.Referer(), http.StatusFound)
+		return
+	}
+
+	r.URL.Scheme = "http"
+	if r.TLS != nil {
+		r.URL.Scheme = "https"
+	}
+	fullHost := fmt.Sprintf("%s://%s", r.URL.Scheme, r.Host)
+
+	err = sendVerification(us.accessSecret, us.fromEmail, us.password, fullHost, user)
+	if err != nil {
+		logErr(w, "oldpassword, newpassword, or confpassword cannot be empty")
+		http.Redirect(w, r, "/settings/account", http.StatusFound)
+		return
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
+}
+
+func sendVerification(accessSecret, fromEmail, password, appIP string, user *manager.User) error {
+	t, err := token.Create(accessSecret, uint64(user.ID()))
+	if err != nil {
+		return err
+	}
+
+	isVerified, err := user.IsVerified()
+	if err != nil {
+		return err
+	}
+	if isVerified {
+		return errored.New("user is already verified")
+	}
+
+	email, err := user.Email()
+	if err != nil {
+		return err
+	}
+
+	username, err := user.Username()
+	if err != nil {
+		return err
+	}
+
+	builtToken := fmt.Sprintf("%s/verify?token=%s", appIP, t)
+
+	body := verifyMailBody(username, builtToken)
+	err = mail.Send(fromEmail, password, email, defaultSubject, body)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+const defaultSubject = "Welcome to pensive"
+const verifyMailTmpl = `
+Welcome to pensive
+
+
+Your account @%s, is successfully created. 
+We graciously welcome you at our place.
+In order to access you with our best possible service, please verify your e-mail by clicking the link below:
+
+%s
+
+If this is not your account, unexpected behavior, or you would not want to verify your e-mail for pensive, DO NOT CLICK.
+Perhaps, report the incident to us.
+
+Thank you for being with us. Enjoy your stay.
+
+
+
+--
+DO NOT REPLY
+`
+
+func verifyMailBody(username, link string) string {
+	return fmt.Sprintf(verifyMailTmpl, username, link)
+}
+
+func (us *UserSettings) AcceptEmailVerif(w http.ResponseWriter, r *http.Request) {
+	user, err := manager.AuthSelf(r, us.session, us.client, UserIDSession)
+	if err != nil {
+		logErr(w, "AuthSelf err:", err)
+		http.Redirect(w, r, r.Referer(), http.StatusFound)
+		return
+	}
+
+	isVerified, err := user.IsVerified()
+	if err != nil {
+		logErr(w, "IsVerified err:", err)
+		http.Redirect(w, r, r.Referer(), http.StatusFound)
+		return
+	}
+	if isVerified {
+		http.Redirect(w, r, r.Referer(), http.StatusFound)
+		return
+	}
+
+	// // match query
+	// v := r.URL.Query()
+	// t := v.Get("token")
+
+	err = user.Verify(true)
+	if err != nil {
+		logErr(w, "Verify err:", err)
+		http.Redirect(w, r, r.Referer(), http.StatusFound)
+		return
+	}
+
+	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }

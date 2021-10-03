@@ -7,8 +7,8 @@ import (
 
 	"github.com/go-redis/redis"
 	"github.com/gocs/pensive"
-	"github.com/gocs/pensive/pkg/timelayout"
 	sessions "github.com/gocs/pensive/internal/session"
+	"github.com/gocs/pensive/pkg/timelayout"
 )
 
 // User the general people
@@ -34,13 +34,23 @@ func (u *User) Password() ([]byte, error) {
 	return u.c.HGet(key, "password").Bytes()
 }
 
-// Email Hash getter
+// Email getter
 func (u *User) Email() (string, error) {
 	key := fmt.Sprintf("user:%d", u.id)
 	return u.c.HGet(key, "email").Result()
 }
 
-// CreatedAt Hash getter
+// IsVerified getter
+func (u *User) IsVerified() (bool, error) {
+	key := fmt.Sprintf("user:%d", u.id)
+	result, err := u.c.HGet(key, "is_verified").Result()
+	if err != nil {
+		return false, err
+	}
+	return result == "true", nil
+}
+
+// CreatedAt getter
 // there should be no setter for created at
 func (u *User) CreatedAt() (*time.Time, error) {
 	key := fmt.Sprintf("user:%d", u.id)
@@ -71,25 +81,37 @@ func (u *User) UpdatedAt() (*time.Time, error) {
 	return &t, err
 }
 
-// Username Username setter
+// SetUsername Username setter
 func (u *User) SetUsername(value string) error {
 	key := fmt.Sprintf("user:%d", u.id)
 	return u.c.HSet(key, "username", value).Err()
 }
 
-// Password Hash setter
+// SetPassword Password Hash setter
 func (u *User) SetPassword(value []byte) error {
 	key := fmt.Sprintf("user:%d", u.id)
 	return u.c.HSet(key, "password", value).Err()
 }
 
-// Email Hash setter
+// SetEmail Email setter
 func (u *User) SetEmail(value string) error {
 	key := fmt.Sprintf("user:%d", u.id)
-	return u.c.HGet(key, "email").Err()
+	return u.c.HSet(key, "email", value).Err()
 }
 
-// UpdatedAt Hash setter
+// Verify Verify setter
+// this converts bool to a redis friendly string bool
+func (u *User) Verify(value bool) error {
+	result := "false"
+	if value {
+		result = "true"
+	}
+
+	key := fmt.Sprintf("user:%d", u.id)
+	return u.c.HSet(key, "is_verified", result).Err()
+}
+
+// UpdateNow UpdatedAt setter
 func (u *User) UpdateNow() error {
 	now := time.Now().UTC().String()
 	key := fmt.Sprintf("user:%d", u.id)
@@ -119,6 +141,7 @@ func AddUser(c redis.Cmdable, username string, password []byte, email string) (*
 	pipe.HSet(key, "username", username)
 	pipe.HSet(key, "password", password)
 	pipe.HSet(key, "email", email)
+	pipe.HSet(key, "is_verified", "false")
 	pipe.HSet(key, "created_at", now)
 	pipe.HSet(key, "updated_at", now)
 	pipe.HSet("user:by-username", username, id)

@@ -1,4 +1,13 @@
-# Docker Compose Env
+# DO NOT PUSH
+# Docker Env
+
+
+	# Make sure the docker-compose has provided available environment variables
+
+
+
+    # Copy this manually to production
+
 
 SESSION_KEY=soopa-shiikurrets
 REDIS_ADDR=redis:6379
@@ -7,3 +16,8 @@ REDIS_PASSWORD="struct256_Type"
 SEAWEED_SERVER_ADDR=http://seaweedfs:9333
 SEAWEED_UPLOAD_ADDR=http://seaweedfs:8080
 SEAWEED_UPLOAD_IP=http://localhost:8080
+
+GMAIL_EMAIL=example.env@example.com
+GMAIL_APP_PASSWORD=
+
+ACCESS_SECRET=1231231222222222123123123123apploe

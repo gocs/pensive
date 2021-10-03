@@ -17,26 +17,37 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-func New(sessionKey, redisAddr, redisPassword, weedAddr, weedUpAddr, weedUpIP string) (*mux.Router, error) {
+type Config struct {
+	SessionKey, RedisAddr, RedisPassword, WeedAddr, WeedUpAddr, WeedUpIP, GmailEmail,
+	GmailPassword, AccessSecret string
+}
+
+func New(config *Config) (*mux.Router, error) {
 	r := mux.NewRouter()
 
-	c, err := manager.NewManager(redisAddr, redisPassword)
+	c, err := manager.NewManager(config.RedisAddr, config.RedisPassword)
 	if err != nil {
 		return nil, err
 	}
 
-	s := sessions.New(sessionKey, "session")
+	s := sessions.New(config.SessionKey, "session")
 
 	// handler controllers
 	a := App{
 		client:     c.Cmdable,
 		session:    s,
-		weedAddr:   weedAddr,
-		weedUpAddr: weedUpAddr,
-		weedUpIP:   weedUpIP}
+		weedAddr:   config.WeedAddr,
+		weedUpAddr: config.WeedUpAddr,
+		weedUpIP:   config.WeedUpIP}
 	ul := UserLogin{client: c.Cmdable, session: s}
 	ur := UserRegister{client: c.Cmdable, session: s}
-	us := UserSettings{client: c.Cmdable, session: s}
+	us := UserSettings{
+		client:       c.Cmdable,
+		session:      s,
+		fromEmail:    config.GmailEmail,
+		password:     config.GmailPassword,
+		accessSecret: config.AccessSecret,
+	}
 
 	// middlewares
 	r.Use(prometheusMiddleware)
@@ -60,6 +71,8 @@ func New(sessionKey, redisAddr, redisPassword, weedAddr, weedUpAddr, weedUpIP st
 	r.HandleFunc("/settings/privacy", us.SetPrivacy).Methods("POST")
 	r.HandleFunc("/settings/account", us.GetAccount).Methods("GET")
 	r.HandleFunc("/settings/account", us.SetAccount).Methods("POST")
+	r.HandleFunc("/verify", us.AcceptEmailVerif).Methods("GET")
+	r.HandleFunc("/verify", us.VerifyEmail).Methods("POST")
 
 	// Prometheus endpoint
 	r.Handle("/prometheus", promhttp.Handler())
