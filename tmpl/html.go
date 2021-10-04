@@ -54,7 +54,7 @@ type HomeParams struct {
 	Title       string
 	Name        string
 	DisplayForm bool
-	MediaIP   string
+	MediaIP     string
 	Posts       []*manager.Post
 }
 
@@ -93,9 +93,10 @@ type PrivacyParams struct {
 func Privacy(w io.Writer, p PrivacyParams) error { return privacy.Execute(w, p) }
 
 type AccountParams struct {
-	Title string
-	Name  string
-	User  *manager.User
+	Title      string
+	Name       string
+	User       *manager.User
+	IsVerified bool
 }
 
 func Account(w io.Writer, p AccountParams) error { return account.Execute(w, p) }

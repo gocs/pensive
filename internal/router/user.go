@@ -273,10 +273,17 @@ func (us *UserSettings) GetAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	isVerified, err := user.IsVerified()
+	if err != nil {
+		logErr(w, "GetUser err:", err)
+		return
+	}
+
 	p := tmpl.AccountParams{
-		Title: "Account",
-		Name:  fmt.Sprint("@", u.Username),
-		User:  user,
+		Title:      "Account",
+		Name:       fmt.Sprint("@", u.Username),
+		User:       user,
+		IsVerified: isVerified,
 	}
 	tmpl.Account(w, p)
 }
@@ -330,7 +337,7 @@ func (us *UserSettings) VerifyEmail(w http.ResponseWriter, r *http.Request) {
 }
 
 func sendVerification(accessSecret, fromEmail, password, appIP string, user *manager.User) error {
-	t, err := token.Create(accessSecret, uint64(user.ID()))
+	t, err := token.Create(accessSecret, fmt.Sprint(user.ID()))
 	if err != nil {
 		return err
 	}
@@ -408,13 +415,20 @@ func (us *UserSettings) AcceptEmailVerif(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// // match query
-	// v := r.URL.Query()
-	// t := v.Get("token")
+	// match query
+	v := r.URL.Query()
+	t := v.Get("token")
 
+	if err := token.Verify(us.accessSecret, t, fmt.Sprint(user.ID())); err != nil {
+		logErr(w, "token Verify err:", err)
+		http.Redirect(w, r, r.Referer(), http.StatusFound)
+		return
+	}
+
+	// verification passed
 	err = user.Verify(true)
 	if err != nil {
-		logErr(w, "Verify err:", err)
+		logErr(w, "user Verify err:", err)
 		http.Redirect(w, r, r.Referer(), http.StatusFound)
 		return
 	}
