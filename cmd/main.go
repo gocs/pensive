@@ -10,26 +10,26 @@ import (
 )
 
 func main() {
-	// sets the session cookie store key
-	session := getEnv("SESSION_KEY", "soopa-shiikurrets")
-	// sets the redis localhost and port
-	redisAddr := getEnv("REDIS_ADDR", "localhost:6380")
-	// sets the redis password
-	redisPassword := getEnv("REDIS_PASSWORD", "")
-	// sets the file store assign address
-	weedAddr := getEnv("SEAWEED_SERVER_ADDR", "http://seaweedfs:9333")
-	// sets the file store upload address
-	weedUpAddr := getEnv("SEAWEED_UPLOAD_ADDR", "http://seaweedfs:8080")
-	// sets the file store upload ip
-	weedUpIP := getEnv("SEAWEED_UPLOAD_IP", "http://127.0.0.1:8080")
-
-	r, err := router.New(
-		session,
-		redisAddr,
-		redisPassword,
-		weedAddr,
-		weedUpAddr,
-		weedUpIP)
+	r, err := router.New(&router.Config{
+		// sets the session cookie store key
+		SessionKey: getEnv("SESSION_KEY", "soopa-shiikurrets"),
+		// sets the redis localhost and port
+		RedisAddr: getEnv("REDIS_ADDR", "localhost:6380"),
+		// sets the redis password
+		RedisPassword: getEnv("REDIS_PASSWORD", ""),
+		// sets the file store assign address
+		WeedAddr: getEnv("SEAWEED_SERVER_ADDR", "http://seaweedfs:9333"),
+		// sets the file store upload address
+		WeedUpAddr: getEnv("SEAWEED_UPLOAD_ADDR", "http://seaweedfs:8080"),
+		// sets the file store upload ip
+		WeedUpIP: getEnv("SEAWEED_UPLOAD_IP", "http://127.0.0.1:8080"),
+		// sets the gmail username as sender
+		GmailEmail: getEnv("GMAIL_EMAIL", "example@example.com"),
+		// sets the gmail app password of sender
+		GmailPassword: getEnv("GMAIL_APP_PASSWORD", ""),
+		// sets the jwt secret key
+		AccessSecret: getEnv("ACCESS_SECRET", "soopa-shiikurrets-too"),
+	})
 	if err != nil {
 		log.Fatal(err)
 	}
