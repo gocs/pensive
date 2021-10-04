@@ -1,6 +1,7 @@
 # Pensive
 
-![sample image](./docs/screenshot.png)
+<img src="./docs/screenshot1.png" alt="drawing" width="300"/>
+<img src="./docs/screenshot2.png" alt="drawing" width="300"/>
 
 ## prerequisites
 
