@@ -1,15 +1,18 @@
 
 KEY := "sessionKey"
 
-.PHONY: reload
+.PHONY: prod
 reload:
 	@GOOS="linux" GOARCH="amd64" CGO_ENABLED=0 go build -o app ./cmd/main.go
 	@docker-compose down && docker-compose up --build -d
 
 
-.PHONY: run
-run:
-	@go run cmd/main.go -session-key=$(KEY)
+.PHONY: test
+test:
+	@docker-compose down
+	@GOOS="linux" GOARCH="amd64" CGO_ENABLED=0 go build -o ./test/app ./cmd/main.go
+	@cd test && docker-compose down && docker-compose up --build -d
+
 
 
 # THIS DOESN'T WORK

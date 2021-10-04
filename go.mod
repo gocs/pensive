@@ -12,7 +12,6 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.1.0
 	github.com/gorilla/mux v1.8.0
 	github.com/gorilla/sessions v1.2.1
-	github.com/joho/godotenv v1.4.0
 	github.com/onsi/ginkgo v1.15.1 // indirect
 	github.com/onsi/gomega v1.11.0 // indirect
 	github.com/prometheus/client_golang v1.10.0
