@@ -13,9 +13,10 @@
     <div>
         <form action="/post" method="post" enctype="multipart/form-data">
             <div class="input-group mb-3">
-                <input type="text" name="post" aria-label="Post" class="form-control">
-                <input type="file" name="media-source" aria-label="Media source" class="form-control" accept="audio/*,video/*,image/*">
-                <button type="submit" class="btn btn-secondary">Submit</button>
+                <label class="input-group-text" for="media-source" id="filename">upload..</label>
+                <input type="file" id="media-source" onchange="getValue()" name="media-source" aria-label="media source" class="form-control" accept="audio/*,video/*,image/*">
+                <input type="text" name="post" aria-label="post" class="form-control">
+                <button type="submit" class="btn btn-secondary">submit</button>
             </div>
         </form>
     </div>
@@ -32,4 +33,13 @@
     </div>
     {{end}}
 </main>
+{{end}}
+<!-- This defines the foot context -->
+{{define "foot"}}
+    <script>
+        function getValue() {
+            var filename = document.getElementById('media-source').value;
+            document.getElementById('filename').innerText = filename;
+        }
+    </script>
 {{end}}

@@ -1,4 +1,13 @@
 img {
     display: block;
     height: auto;
+    max-width: 100%;
+}
+
+input#media-source[type="file"] {
+    display: none;
+}
+
+nav#site-nav {
+    backdrop-filter: blur(20px) brightness(50%);
 }

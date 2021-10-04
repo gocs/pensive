@@ -1,7 +1,7 @@
 {{define "header"}}
-<header class="container fixed-top">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container-fluid">
+<header class="fixed-top">
+    <nav id="site-nav" class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
             <a class="navbar-brand" href="/">pensive</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -18,13 +18,15 @@
                         </ul>
                     </li>
                 </ul>
-                <form class="d-flex">
-                    <div class="input-group input-group-sm me-3">
-                        <input class="form-control" type="search" placeholder="search" aria-label="search" aria-describedby="main-search">
-                        <button class="btn btn-success" type="submit" id="main-search">search</button>
-                    </div>
-                </form>
-                <form class="d-flex" action="/logout" method="post"><button class="btn btn-danger">logout</button></form>
+                <div>
+                    <form class="d-lg-inline-flex flex-grow-1 mb-2">
+                        <div class="input-group input-group-sm me-3">
+                            <input class="form-control" type="search" placeholder="search" aria-label="search" aria-describedby="main-search">
+                            <button class="btn btn-success" type="submit" id="main-search">search</button>
+                        </div>
+                    </form>
+                    <form class="d-lg-inline-flex flex-grow-1 mb-2" action="/logout" method="post"><button class="btn btn-sm btn-danger">logout</button></form>
+                </div>
             </div>
         </div>
     </nav>
