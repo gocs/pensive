@@ -138,7 +138,6 @@ func (a *App) homePost(w http.ResponseWriter, r *http.Request) {
 	userID := self.ID()
 	fid := ""
 
-	body := r.FormValue("post")
 	mf, _, err := r.FormFile("media-source")
 	if err == nil {
 		defer mf.Close()
@@ -165,6 +164,7 @@ func (a *App) homePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	body := r.FormValue("post")
 	if err := manager.PostUpdate(a.client, userID, body, fid); err != nil {
 		logErr(w, "PostUpdate err:", err)
 		http.Redirect(w, r, "/", http.StatusFound)
