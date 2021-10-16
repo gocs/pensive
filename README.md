@@ -11,9 +11,9 @@ redis
 
 rename `.env copy` to `.env`
 
-## run docker
+## run dev
 
-```make reload```
+```make dev```
 
 see `Makefile for other commands`..
 
