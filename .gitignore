@@ -24,3 +24,7 @@ private
 
 # ignore output file/binary
 app
+
+# ignore secrets
+*.key
+*.crt
