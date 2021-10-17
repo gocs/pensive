@@ -24,6 +24,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/gocs/pensive"
 	"github.com/gocs/pensive/internal/manager"
 )
 
@@ -54,8 +55,7 @@ type HomeParams struct {
 	Title       string
 	Name        string
 	DisplayForm bool
-	MediaIP     string
-	Posts       []*manager.Post
+	Posts       []pensive.PostPublic
 }
 
 func Home(w io.Writer, p HomeParams) error { return home.Execute(w, p) }

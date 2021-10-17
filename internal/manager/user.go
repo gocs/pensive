@@ -153,14 +153,17 @@ func AddUser(c redis.Cmdable, username string, password []byte, email string) (*
 }
 
 // RegisterUser register a valid user
-func RegisterUser(c redis.Cmdable, username, password, email string) error {
+func RegisterUser(c redis.Cmdable, username, password, email string) (*User, error) {
 	hash, err := pensive.ValidatePassword(password)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	_, err = AddUser(c, username, hash, email)
-	return err
+	u, err := AddUser(c, username, hash, email)
+	if err != nil {
+		return nil, err
+	}
+	return u, nil
 }
 
 // AuthSelf checks if username has registered in this site

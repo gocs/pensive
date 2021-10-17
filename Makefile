@@ -8,7 +8,7 @@ reload:
 
 
 .PHONY: dev
-test:
+dev:
 	@docker-compose down
 	@GOOS="linux" GOARCH="amd64" CGO_ENABLED=0 go build -o ./test/app ./cmd/main.go
 	@cd test && docker-compose down && docker-compose up --build -d

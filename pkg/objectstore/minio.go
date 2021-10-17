@@ -2,7 +2,6 @@ package objectstore
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"log"
 	"net/url"
@@ -45,7 +44,7 @@ func (ostore *ObjectStore) MakeBucket(ctx context.Context, bucketName string, op
 		if errBucketExists == nil && exists {
 			log.Printf("We already own %s\n", bucketName)
 		} else {
-			log.Fatalln(err)
+			return err
 		}
 	} else {
 		log.Printf("Successfully created %s\n", bucketName)
@@ -84,17 +83,19 @@ func (ostore *ObjectStore) ListAllBucketsObjects(ctx context.Context, opts ListO
 	return objs, nil
 }
 
+type PresignedGetObjectOptions struct {
+	ReqParams              url.Values
+	PresignedURLExpiration time.Duration
+}
+
 // PresignedGetObject gets presigned URL for object
 // if presignedURLExpiration is not set defaults to a day
-func (ostore *ObjectStore) GetPresignedURLObject(ctx context.Context, bucketName, filename string, presignedURLExpiration time.Duration) (*url.URL, error) {
-	reqParams := url.Values{}
-	reqParams.Set("response-content-disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
-
-	ostore.PresignedURLExpiration = presignedURLExpiration
+func (ostore *ObjectStore) GetPresignedURLObject(ctx context.Context, bucketName, filename string, opts PresignedGetObjectOptions) (*url.URL, error) {
+	ostore.PresignedURLExpiration = opts.PresignedURLExpiration
 	if ostore.PresignedURLExpiration == 0 {
 		ostore.PresignedURLExpiration = time.Second * 24 * 60 * 60
 	}
-	return ostore.mc.PresignedGetObject(ctx, bucketName, filename, ostore.PresignedURLExpiration, reqParams)
+	return ostore.mc.PresignedGetObject(ctx, bucketName, filename, ostore.PresignedURLExpiration, opts.ReqParams)
 }
 
 type PutObjectOptions minio.PutObjectOptions

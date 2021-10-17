@@ -24,6 +24,12 @@ func main() {
 	}
 
 	bucketName := "site-files"
+	location := "us-east-1"
+
+	err = objs.MakeBucket(ctx, bucketName, objectstore.MakeBucketOptions{Region: location})
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	objects, err := objs.ListAllBucketsObjects(ctx, objectstore.ListObjectsOptions{Recursive: true})
 	if err != nil {
@@ -31,13 +37,14 @@ func main() {
 	}
 	object_urls := map[string]string{}
 	for _, object := range objects {
+		opts := objectstore.PresignedGetObjectOptions{}
 		// Generates a presigned url which expires in a day.
-		presignedURL, err := objs.GetPresignedURLObject(ctx, bucketName, object.Key, 0)
+		presignedURL, err := objs.GetPresignedURLObject(ctx, bucketName, object.Key, opts)
 		if err != nil {
 			log.Println(err)
 			return
 		}
-		object_urls[presignedURL.String()] = file.GetExtension(object.Key)
+		object_urls[presignedURL.String()] = file.GetMediaType(object.Key)
 
 	}
 
@@ -60,7 +67,7 @@ func main() {
 				ContentType: file.DetectContentType(fh.Filename),
 			}
 
-			info, err := objs.SaveObject(ctx, bucketName, fh.Filename, mf, fh.Size, opts)
+			info, err := objs.SaveObject(r.Context(), bucketName, fh.Filename, mf, fh.Size, opts)
 			if err != nil {
 				log.Println(w, "SaveObject err:", err)
 				http.Redirect(w, r, "/", http.StatusFound)

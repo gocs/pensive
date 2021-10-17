@@ -4,8 +4,8 @@ import (
 	"strings"
 )
 
-// Extensions returns extensions as key, and value as their type/format
-func Extensions() map[string]string {
+// MediaTypes returns extensions as key, and value as their type/format
+func MediaTypes() map[string]string {
 	return map[string]string{
 		".txt": "text",
 
@@ -55,9 +55,9 @@ func ContentTypes() map[string]string {
 	}
 }
 
-// GetExtension gets extension from filename
-func GetExtension(filename string) string {
-	for ext, format := range Extensions() {
+// GetMediaType gets extension from filename
+func GetMediaType(filename string) string {
+	for ext, format := range MediaTypes() {
 		if strings.HasSuffix(filename, ext) {
 			return format
 		}

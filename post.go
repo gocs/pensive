@@ -13,6 +13,15 @@ type Post struct {
 	UpdatedAt *time.Time // required, nonzero
 }
 
+// PostPublic is the post displayed through the site
+type PostPublic struct {
+	User           string
+	Caption        string
+	AttachmentURL  string
+	AttachmentType string
+	UpdatedAt      string
+}
+
 // updates list
 // search post by user
 // search user by post

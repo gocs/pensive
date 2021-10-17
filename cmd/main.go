@@ -17,18 +17,18 @@ func main() {
 		RedisAddr: getEnv("REDIS_ADDR", "localhost:6380"),
 		// sets the redis password
 		RedisPassword: getEnv("REDIS_PASSWORD", ""),
-		// sets the file store assign address
-		WeedAddr: getEnv("SEAWEED_SERVER_ADDR", "http://seaweedfs:9333"),
-		// sets the file store upload address
-		WeedUpAddr: getEnv("SEAWEED_UPLOAD_ADDR", "http://seaweedfs:8080"),
-		// sets the file store upload ip
-		WeedUpIP: getEnv("SEAWEED_UPLOAD_IP", "http://127.0.0.1:8080"),
 		// sets the gmail username as sender
 		GmailEmail: getEnv("GMAIL_EMAIL", "example@example.com"),
 		// sets the gmail app password of sender
 		GmailPassword: getEnv("GMAIL_APP_PASSWORD", ""),
 		// sets the jwt secret key
 		AccessSecret: getEnv("ACCESS_SECRET", "soopa-shiikurrets-too"),
+		// sets the minio api endpoint
+		MinioEndpoint: getEnv("MINIO_ENDPOINT", "127.0.0.1:9000"),
+		// sets the minio username
+		MinioUser: getEnv("MINIO_ROOT_USER", "minio"),
+		// sets the minio password or API Key
+		MinioPassword: getEnv("MINIO_ROOT_PASSWORD", "awaawawaaawawa123123xqcCursed"),
 	})
 	if err != nil {
 		log.Fatal(err)

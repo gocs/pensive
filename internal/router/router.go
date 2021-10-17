@@ -2,24 +2,25 @@ package router
 
 import (
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"strings"
 
 	"github.com/go-redis/redis"
 	"github.com/gocs/pensive/internal/manager"
+	"github.com/gocs/pensive/internal/managerstore"
 	sessions "github.com/gocs/pensive/internal/session"
+	"github.com/gocs/pensive/pkg/file"
+	"github.com/gocs/pensive/pkg/objectstore"
 	"github.com/gocs/pensive/tmpl"
 
-	"github.com/gocs/pensive/pkg/store"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type Config struct {
-	SessionKey, RedisAddr, RedisPassword, WeedAddr, WeedUpAddr, WeedUpIP, GmailEmail,
-	GmailPassword, AccessSecret string
+	SessionKey, RedisAddr, RedisPassword, GmailEmail,
+	GmailPassword, AccessSecret, MinioEndpoint, MinioUser, MinioPassword string
 }
 
 func New(config *Config) (*mux.Router, error) {
@@ -32,15 +33,27 @@ func New(config *Config) (*mux.Router, error) {
 
 	s := sessions.New(config.SessionKey, "session")
 
+	objs, err := objectstore.New(objectstore.Config{
+		Endpoint:        config.MinioEndpoint,
+		AccessKeyID:     config.MinioUser,
+		SecretAccessKey: config.MinioPassword,
+	})
+	if err != nil {
+		log.Fatalln(err)
+	}
+
 	// handler controllers
 	a := App{
-		client:     c.Cmdable,
-		session:    s,
-		weedAddr:   config.WeedAddr,
-		weedUpAddr: config.WeedUpAddr,
-		weedUpIP:   config.WeedUpIP}
+		client:  c.Cmdable,
+		session: s,
+		objs:    objs,
+	}
 	ul := UserLogin{client: c.Cmdable, session: s}
-	ur := UserRegister{client: c.Cmdable, session: s}
+	ur := UserRegister{
+		client:  c.Cmdable,
+		session: s,
+		objs:    objs,
+	}
 	us := UserSettings{
 		client:       c.Cmdable,
 		session:      s,
@@ -82,11 +95,9 @@ func New(config *Config) (*mux.Router, error) {
 
 // App is the struct for the homepage or the user profile homepage
 type App struct {
-	client     redis.Cmdable
-	session    *sessions.Session
-	weedAddr   string
-	weedUpAddr string
-	weedUpIP   string
+	client  redis.Cmdable
+	session *sessions.Session
+	objs    *objectstore.ObjectStore
 }
 
 const (
@@ -111,9 +122,9 @@ func (a *App) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	posts, err := manager.GetAllPosts(a.client)
+	ps, err := managerstore.ListPost(r.Context(), a.objs, a.client)
 	if err != nil {
-		logErr(w, "GetAllPosts err:", err)
+		logErr(w, "ListPost err:", err)
 		return
 	}
 
@@ -121,8 +132,7 @@ func (a *App) home(w http.ResponseWriter, r *http.Request) {
 		Title:       "Posts",
 		DisplayForm: true,
 		Name:        fmt.Sprint("@", u.Username),
-		Posts:       posts,
-		MediaIP:     a.weedUpIP,
+		Posts:       ps,
 	}
 	tmpl.Home(w, p)
 }
@@ -136,26 +146,25 @@ func (a *App) homePost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userID := self.ID()
-	fid := ""
 
-	mf, _, err := r.FormFile("media-source")
+	mediaSource := "media-source"
+	filename := ""
+	mf, fh, err := r.FormFile(mediaSource)
 	if err == nil {
 		defer mf.Close()
-		assignResp, err := store.Assign(a.weedAddr)
+
+		bName := fmt.Sprintf("user%d", userID)
+		opts := objectstore.PutObjectOptions{
+			ContentType: file.DetectContentType(fh.Filename),
+		}
+
+		_, err := a.objs.SaveObject(r.Context(), bName, fh.Filename, mf, fh.Size, opts)
 		if err != nil {
-			logErr(w, "Assign err:", err)
+			log.Println(w, "SaveObject err:", err)
 			http.Redirect(w, r, "/", http.StatusFound)
 			return
 		}
-
-		fid = assignResp.Fid
-		form := map[string]io.Reader{"media-source": mf}
-
-		if _, err := store.Upload(fmt.Sprintf("%s/%s", a.weedUpAddr, fid), form); err != nil {
-			logErr(w, "Upload err:", err)
-			http.Redirect(w, r, "/", http.StatusFound)
-			return
-		}
+		filename = fh.Filename
 	} else if err == http.ErrMissingFile {
 		logErr(w, "FormFile skip:", err)
 	} else {
@@ -165,7 +174,7 @@ func (a *App) homePost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	body := r.FormValue("post")
-	if err := manager.PostUpdate(a.client, userID, body, fid); err != nil {
+	if err := manager.PostUpdate(a.client, userID, body, filename); err != nil {
 		logErr(w, "PostUpdate err:", err)
 		http.Redirect(w, r, "/", http.StatusFound)
 		return
@@ -198,9 +207,9 @@ func (a *App) profile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	posts, err := manager.GetPosts(a.client, u.ID)
+	ps, err := managerstore.ListPost(r.Context(), a.objs, a.client)
 	if err != nil {
-		logErr(w, "GetPosts err:", err)
+		logErr(w, "ListPost err:", err)
 		return
 	}
 
@@ -208,8 +217,7 @@ func (a *App) profile(w http.ResponseWriter, r *http.Request) {
 		Title:       "Posts",
 		Name:        fmt.Sprint("@", u.Username),
 		DisplayForm: true,
-		MediaIP:     a.weedUpIP,
-		Posts:       posts,
+		Posts:       ps,
 	}
 	tmpl.Home(w, p)
 }

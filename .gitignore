@@ -28,3 +28,7 @@ app
 # ignore secrets
 *.key
 *.crt
+
+test/nginx.conf
+test/openssl.conf
+minio/openssl.conf

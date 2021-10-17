@@ -22,14 +22,25 @@
     </div>
     {{end}}
 
-    {{$addr := .MediaIP}}
     {{range .Posts}}
     <div>
         <div>
-            <strong><a href="/@{{.User.Username}}">@{{.User.Username}}</a>:</strong>
+            <strong><a href="/@{{.User}}">@{{.User}}</a> - <sup>{{.UpdatedAt}}</sup>:</strong>
         </div>
-        <div>{{.Body}}</div>
-        {{if .MediaID}}<div><img src="{{$addr}}/{{.MediaID}}" alt="it doesn't show up, contact admin"></div>{{end}}
+        <div>{{.Caption}}</div>
+        {{if .AttachmentURL}}
+        <div>
+            {{if eq .AttachmentType "image"}}
+            <img src="{{.AttachmentURL}}" alt="it doesn't show up, contact admin">
+            {{else if eq .AttachmentType "video"}}
+            <video src="{{.AttachmentURL}}" controls>Your browser does not support the video tag.</video>
+            {{else if eq .AttachmentType "audio"}}
+            <video src="{{.AttachmentURL}}" controls>Your browser does not support the video tag.</video>
+            {{else}}
+            {{.AttachmentURL}}
+            {{end}}
+        </div>
+        {{end}}
     </div>
     {{end}}
 </main>

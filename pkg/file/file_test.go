@@ -18,7 +18,7 @@ func TestGetExtension(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := GetExtension(tt.args.filename); got != tt.want {
+			if got := GetMediaType(tt.args.filename); got != tt.want {
 				t.Errorf("GetExtension() = %v, want %v", got, tt.want)
 			}
 		})

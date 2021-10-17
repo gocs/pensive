@@ -10,6 +10,7 @@ import (
 	sessions "github.com/gocs/pensive/internal/session"
 
 	"github.com/gocs/pensive/pkg/mail"
+	"github.com/gocs/pensive/pkg/objectstore"
 	"github.com/gocs/pensive/pkg/token"
 	"github.com/gocs/pensive/pkg/validator"
 	"github.com/gocs/pensive/tmpl"
@@ -66,6 +67,7 @@ func (u *UserLogin) Post(w http.ResponseWriter, r *http.Request) {
 type UserRegister struct {
 	client  redis.Cmdable
 	session *sessions.Session
+	objs    *objectstore.ObjectStore
 }
 
 // Get should always redirect to "/" if the user is logged in otherwise go back to "/login" to relogin
@@ -97,8 +99,20 @@ func (ur *UserRegister) Post(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := manager.RegisterUser(ur.client, username, password, email); err != nil {
+	u, err := manager.RegisterUser(ur.client, username, password, email)
+	if err != nil {
 		logErr(w, "RegisterUser err:", err)
+		http.Redirect(w, r, "/register", http.StatusFound)
+		return
+	}
+
+	bName := fmt.Sprintf("user%d", u.ID())
+	location := "us-east-1"
+	opts := objectstore.MakeBucketOptions{Region: location}
+
+	err = ur.objs.MakeBucket(r.Context(), bName, opts)
+	if err != nil {
+		logErr(w, "MakeBucket err:", err)
 		http.Redirect(w, r, "/register", http.StatusFound)
 		return
 	}
