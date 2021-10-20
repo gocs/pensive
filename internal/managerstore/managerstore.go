@@ -3,7 +3,6 @@ package managerstore
 import (
 	"context"
 	"fmt"
-	"net/url"
 	"time"
 
 	"github.com/go-redis/redis"
@@ -46,17 +45,12 @@ func ListPost(ctx context.Context, objs *objectstore.ObjectStore, c redis.Cmdabl
 
 		attachmentURL := ""
 		if filename != "" {
-			r := url.Values{}
-			r.Set("response-content-disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
-			opts := objectstore.PresignedGetObjectOptions{
-				ReqParams: r,
-			}
+			opts := objectstore.PresignedGetObjectOptions{}
 			url, err := objs.GetPresignedURLObject(ctx, bName, filename, opts)
 			if err != nil {
 				return nil, err
 			}
 
-			url.Host = fmt.Sprintf("localhost:%s", url.Port())
 			attachmentURL = url.String()
 		}
 

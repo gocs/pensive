@@ -17,7 +17,7 @@ func main() {
 	objs, err := objectstore.New(objectstore.Config{
 		Endpoint:        "127.0.0.1:9000",
 		AccessKeyID:     "minio",
-		SecretAccessKey: "awaawawaaawawa123123xqcCursed",
+		SecretAccessKey: "minio123quickiequicky",
 	})
 	if err != nil {
 		log.Fatalln(err)
@@ -29,23 +29,6 @@ func main() {
 	err = objs.MakeBucket(ctx, bucketName, objectstore.MakeBucketOptions{Region: location})
 	if err != nil {
 		log.Fatalln(err)
-	}
-
-	objects, err := objs.ListAllBucketsObjects(ctx, objectstore.ListObjectsOptions{Recursive: true})
-	if err != nil {
-		log.Fatalln(err)
-	}
-	object_urls := map[string]string{}
-	for _, object := range objects {
-		opts := objectstore.PresignedGetObjectOptions{}
-		// Generates a presigned url which expires in a day.
-		presignedURL, err := objs.GetPresignedURLObject(ctx, bucketName, object.Key, opts)
-		if err != nil {
-			log.Println(err)
-			return
-		}
-		object_urls[presignedURL.String()] = file.GetMediaType(object.Key)
-
 	}
 
 	tmpl := template.Must(template.New("webpage").Parse(tpl))
@@ -76,6 +59,24 @@ func main() {
 			log.Println(w, "SaveObject info:", info)
 			http.Redirect(w, r, "/", http.StatusFound)
 			return
+		}
+
+		objects, err := objs.ListAllBucketsObjects(r.Context(), objectstore.ListObjectsOptions{Recursive: true})
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		object_urls := map[string]string{}
+		opts := objectstore.PresignedGetObjectOptions{}
+		for _, object := range objects {
+			// Generates a presigned url which expires in a day.
+			presignedURL, err := objs.GetPresignedURLObject(ctx, bucketName, object.Key, opts)
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			object_urls[presignedURL.String()] = file.GetMediaType(object.Key)
+
 		}
 
 		data := Data{
