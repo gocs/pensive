@@ -207,7 +207,7 @@ func (a *App) profile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ps, err := managerstore.ListPost(r.Context(), a.objs, a.client)
+	ps, err := managerstore.ListPostByUserID(r.Context(), a.objs, a.client, u.ID)
 	if err != nil {
 		logErr(w, "ListPost err:", err)
 		return
