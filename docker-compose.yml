@@ -1,4 +1,20 @@
-version: "3"
+version: '3.7'
+
+# Settings and configurations that are common for all containers
+x-minio-common: &minio-common
+  image: quay.io/minio/minio:RELEASE.2021-10-02T16-31-05Z
+  command: server --console-address ":9001" http://minio{1...4}/data{1...2}
+  expose:
+    - "9000"
+    - "9001"
+  environment:
+    MINIO_ROOT_USER: "${MINIO_ROOT_USER}"
+    MINIO_ROOT_PASSWORD: "${MINIO_ROOT_PASSWORD}"
+  healthcheck:
+    test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+    interval: 30s
+    timeout: 20s
+    retries: 3
 
 services:
   app:
@@ -11,16 +27,17 @@ services:
       - redis
       - prometheus
       - grafana
-      - seaweedfs
+      - nginx
     environment:
       SESSION_KEY: "${SESSION_KEY}"
       REDIS_ADDR: "${REDIS_ADDR}" # example: redis:6379
       REDIS_PASSWORD: "${REDIS_PASSWORD}"
-      SEAWEED_SERVER_ADDR: "${SEAWEED_SERVER_ADDR}"
-      SEAWEED_UPLOAD_IP: "${SEAWEED_UPLOAD_IP}"
       GMAIL_EMAIL: "${GMAIL_EMAIL}"
       GMAIL_APP_PASSWORD: "${GMAIL_APP_PASSWORD}"
       ACCESS_SECRET: "${ACCESS_SECRET}"
+      MINIO_ENDPOINT: "${MINIO_ENDPOINT}"
+      MINIO_ROOT_USER: "${MINIO_ROOT_USER}"
+      MINIO_ROOT_PASSWORD: "${MINIO_ROOT_PASSWORD}"
     networks:
       - backend
 
@@ -33,13 +50,82 @@ services:
     networks:
       - backend
 
-  seaweedfs:
-    build:
-      context: ./
-      dockerfile: Dockerfile.weed
+  redis_exporter:
+    container_name: redis_exporter
     ports:
-      - "8080:8080"
-      - "9333:9333"
+        - '9121:9121'
+    image: oliver006/redis_exporter
+    depends_on:
+      - redis
+    networks:
+      - backend
+
+  minio1:
+    <<: *minio-common
+    hostname: minio1
+    volumes:
+      - data1-1:/data1
+      - data1-2:/data2
+    networks:
+      - backend
+
+  minio2:
+    <<: *minio-common
+    hostname: minio2
+    volumes:
+      - data2-1:/data1
+      - data2-2:/data2
+    networks:
+      - backend
+
+  minio3:
+    <<: *minio-common
+    hostname: minio3
+    volumes:
+      - data3-1:/data1
+      - data3-2:/data2
+    networks:
+      - backend
+
+  minio4:
+    <<: *minio-common
+    hostname: minio4
+    volumes:
+      - data4-1:/data1
+      - data4-2:/data2
+    networks:
+      - backend
+
+  minio_exporter:
+    container_name: minio_exporter
+    ports:
+        - '9290:9290'
+    image: joepll/minio-exporter
+    environment:
+      MINIO_URL: "${MINIO_ENDPOINT}"
+      MINIO_ACCESS_KEY: "${MINIO_ROOT_USER}"
+      MINIO_ACCESS_SECRET: "${MINIO_ROOT_PASSWORD}"
+    depends_on:
+      - minio1
+      - minio2
+      - minio3
+      - minio4
+    networks:
+      - backend
+
+  nginx:
+    image: nginx:1.19.2-alpine
+    hostname: nginx
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    depends_on:
+      - minio1
+      - minio2
+      - minio3
+      - minio4
     networks:
       - backend
 
@@ -71,6 +157,14 @@ services:
 volumes:
   grafana-store:
   prometheus_data:
+  data1-1:
+  data1-2:
+  data2-1:
+  data2-2:
+  data3-1:
+  data3-2:
+  data4-1:
+  data4-2:
 
 networks:
   backend:
