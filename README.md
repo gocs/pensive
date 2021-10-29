@@ -1,7 +1,7 @@
 # Pensive
 
 <img src="./docs/screenshot1.png" alt="drawing" width="300"/>
-<img src="./docs/screenshot2.png" alt="drawing" width="300"/>
+<img src="./docs/screenshot3.png" alt="drawing" width="300"/>
 
 ## prerequisites
 
@@ -15,7 +15,12 @@ rename `.env copy` to `.env`
 
 ```make dev```
 
-see `Makefile for other commands`..
+## run prod
+
+this includes prometheus and graphana
+
+```make dev```
+
 
 ## license
 
