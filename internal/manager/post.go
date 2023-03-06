@@ -1,13 +1,14 @@
 package manager
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"time"
 
-	"github.com/go-redis/redis"
 	"github.com/gocs/pensive"
 	"github.com/gocs/pensive/pkg/timelayout"
+	"github.com/redis/go-redis/v9"
 )
 
 // Post user generated inputs
@@ -18,21 +19,21 @@ type Post struct {
 }
 
 // Body getter
-func (p *Post) Body() (string, error) {
+func (p *Post) Body(ctx context.Context) (string, error) {
 	key := fmt.Sprintf("post:%d", p.id)
-	return p.c.HGet(key, "body").Result()
+	return p.c.HGet(ctx, key, "body").Result()
 }
 
 // MediaID getter
-func (p *Post) MediaID() (string, error) {
+func (p *Post) MediaID(ctx context.Context) (string, error) {
 	key := fmt.Sprintf("post:%d", p.id)
-	return p.c.HGet(key, "media_id").Result()
+	return p.c.HGet(ctx, key, "media_id").Result()
 }
 
 // User getter
-func (p *Post) User() (*User, error) {
+func (p *Post) User(ctx context.Context) (*User, error) {
 	key := fmt.Sprintf("post:%d", p.id)
-	id, err := p.c.HGet(key, "user_id").Int64()
+	id, err := p.c.HGet(ctx, key, "user_id").Int64()
 	if err != nil {
 		return nil, err
 	}
@@ -41,9 +42,9 @@ func (p *Post) User() (*User, error) {
 }
 
 // CreatedAt getter
-func (p *Post) CreatedAt() (*time.Time, error) {
+func (p *Post) CreatedAt(ctx context.Context) (*time.Time, error) {
 	key := fmt.Sprintf("post:%d", p.id)
-	timeStr, err := p.c.HGet(key, "created_at").Result()
+	timeStr, err := p.c.HGet(ctx, key, "created_at").Result()
 	if err != nil {
 		return nil, err
 	}
@@ -56,9 +57,9 @@ func (p *Post) CreatedAt() (*time.Time, error) {
 }
 
 // UpdatedAt getter
-func (p *Post) UpdatedAt() (*time.Time, error) {
+func (p *Post) UpdatedAt(ctx context.Context) (*time.Time, error) {
 	key := fmt.Sprintf("post:%d", p.id)
-	timeStr, err := p.c.HGet(key, "updated_at").Result()
+	timeStr, err := p.c.HGet(ctx, key, "updated_at").Result()
 	if err != nil {
 		return nil, err
 	}
@@ -71,8 +72,8 @@ func (p *Post) UpdatedAt() (*time.Time, error) {
 }
 
 // AddPost creates a new post, saves it to the database, and returns the newly created question
-func AddPost(c redis.Cmdable, p pensive.Post) (*Post, error) {
-	id, err := c.Incr("post:next-id").Result()
+func AddPost(ctx context.Context, c redis.Cmdable, p pensive.Post) (*Post, error) {
+	id, err := c.Incr(ctx, "post:next-id").Result()
 	if err != nil {
 		return nil, err
 	}
@@ -82,15 +83,15 @@ func AddPost(c redis.Cmdable, p pensive.Post) (*Post, error) {
 
 	key := fmt.Sprintf("post:%d", id)
 	pipe := c.Pipeline()
-	pipe.HSet(key, "id", id)
-	pipe.HSet(key, "user_id", p.User.ID)
-	pipe.HSet(key, "body", p.Body)
-	pipe.HSet(key, "media_id", p.MediaID)
-	pipe.HSet(key, "created_at", now)
-	pipe.HSet(key, "updated_at", now)
-	pipe.LPush("posts", id)
-	pipe.LPush(fmt.Sprintf("user:%d:posts", p.User.ID), id)
-	_, err = pipe.Exec()
+	pipe.HSet(ctx, key, "id", id)
+	pipe.HSet(ctx, key, "user_id", p.User.ID)
+	pipe.HSet(ctx, key, "body", p.Body)
+	pipe.HSet(ctx, key, "media_id", p.MediaID)
+	pipe.HSet(ctx, key, "created_at", now)
+	pipe.HSet(ctx, key, "updated_at", now)
+	pipe.LPush(ctx, "posts", id)
+	pipe.LPush(ctx, fmt.Sprintf("user:%d:posts", p.User.ID), id)
+	_, err = pipe.Exec(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -98,8 +99,8 @@ func AddPost(c redis.Cmdable, p pensive.Post) (*Post, error) {
 	return &Post{id: id, c: c}, nil
 }
 
-func queryPosts(c redis.Cmdable, key string) ([]*Post, error) {
-	postIDs, err := c.LRange(key, 0, 10).Result()
+func queryPosts(ctx context.Context, c redis.Cmdable, key string) ([]*Post, error) {
+	postIDs, err := c.LRange(ctx, key, 0, 10).Result()
 	if err != nil {
 		return nil, err
 	}
@@ -116,18 +117,18 @@ func queryPosts(c redis.Cmdable, key string) ([]*Post, error) {
 }
 
 // GetAllPosts All Updates getter
-func GetAllPosts(c redis.Cmdable) ([]*Post, error) {
-	return queryPosts(c, "posts")
+func GetAllPosts(ctx context.Context, c redis.Cmdable) ([]*Post, error) {
+	return queryPosts(ctx, c, "posts")
 }
 
 // GetPosts gets all updates created by the user
-func GetPosts(c redis.Cmdable, userID int64) ([]*Post, error) {
+func GetPosts(ctx context.Context, c redis.Cmdable, userID int64) ([]*Post, error) {
 	key := fmt.Sprintf("user:%d:posts", userID)
-	return queryPosts(c, key)
+	return queryPosts(ctx, c, key)
 }
 
 // PostUpdate adds a new update; this differs from edit which actually changes
-func PostUpdate(c redis.Cmdable, userID int64, body, mediaID string) error {
+func PostUpdate(ctx context.Context, c redis.Cmdable, userID int64, body, mediaID string) error {
 	if body == "" {
 		if mediaID == "" {
 			return ErrEmptyForm
@@ -140,6 +141,6 @@ func PostUpdate(c redis.Cmdable, userID int64, body, mediaID string) error {
 		MediaID: mediaID,
 	}
 
-	_, err := AddPost(c, p)
+	_, err := AddPost(ctx, c, p)
 	return err
 }

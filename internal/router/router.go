@@ -1,18 +1,19 @@
 package router
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
 	"strings"
 
-	"github.com/go-redis/redis"
 	"github.com/gocs/pensive/internal/manager"
 	"github.com/gocs/pensive/internal/managerstore"
 	sessions "github.com/gocs/pensive/internal/session"
 	"github.com/gocs/pensive/pkg/file"
 	"github.com/gocs/pensive/pkg/objectstore"
 	"github.com/gocs/pensive/tmpl"
+	"github.com/redis/go-redis/v9"
 
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -23,10 +24,10 @@ type Config struct {
 	GmailPassword, AccessSecret, MinioEndpoint, MinioUser, MinioPassword string
 }
 
-func New(config *Config) (*mux.Router, error) {
+func New(ctx context.Context, config *Config) (*mux.Router, error) {
 	r := mux.NewRouter()
 
-	c, err := manager.NewManager(config.RedisAddr, config.RedisPassword)
+	c, err := manager.NewManager(ctx, config.RedisAddr, config.RedisPassword)
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +117,7 @@ func (a *App) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, err := manager.GetUser(a.client, self)
+	u, err := manager.GetUser(r.Context(), a.client, self)
 	if err != nil {
 		logErr(w, "GetUser err:", err)
 		return
@@ -174,7 +175,7 @@ func (a *App) homePost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	body := r.FormValue("post")
-	if err := manager.PostUpdate(a.client, userID, body, filename); err != nil {
+	if err := manager.PostUpdate(r.Context(), a.client, userID, body, filename); err != nil {
 		logErr(w, "PostUpdate err:", err)
 		http.Redirect(w, r, "/", http.StatusFound)
 		return
@@ -193,14 +194,14 @@ func (a *App) profile(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	username := vars["username"]
 	usernameT := strings.Trim(username, "@")
-	user, err := manager.GetUserByName(a.client, usernameT)
+	user, err := manager.GetUserByName(r.Context(), a.client, usernameT)
 	if err != nil {
 		logErr(w, "GetUserByName err:", err)
 		http.Redirect(w, r, "/", http.StatusFound)
 		return
 	}
 
-	u, err := manager.GetUser(a.client, user)
+	u, err := manager.GetUser(r.Context(), a.client, user)
 	if err != nil {
 		logErr(w, "GetUser err:", err)
 		http.Redirect(w, r, "/", http.StatusFound)

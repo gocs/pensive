@@ -1,14 +1,15 @@
 package manager
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"time"
 
-	"github.com/go-redis/redis"
 	"github.com/gocs/pensive"
 	sessions "github.com/gocs/pensive/internal/session"
 	"github.com/gocs/pensive/pkg/timelayout"
+	"github.com/redis/go-redis/v9"
 )
 
 // User the general people
@@ -23,27 +24,27 @@ type User struct {
 func (u *User) ID() int64 { return u.id }
 
 // Username Username getter
-func (u *User) Username() (string, error) {
+func (u *User) Username(ctx context.Context) (string, error) {
 	key := fmt.Sprintf("user:%d", u.id)
-	return u.c.HGet(key, "username").Result()
+	return u.c.HGet(ctx, key, "username").Result()
 }
 
 // Password Hash getter
-func (u *User) Password() ([]byte, error) {
+func (u *User) Password(ctx context.Context) ([]byte, error) {
 	key := fmt.Sprintf("user:%d", u.id)
-	return u.c.HGet(key, "password").Bytes()
+	return u.c.HGet(ctx, key, "password").Bytes()
 }
 
 // Email getter
-func (u *User) Email() (string, error) {
+func (u *User) Email(ctx context.Context) (string, error) {
 	key := fmt.Sprintf("user:%d", u.id)
-	return u.c.HGet(key, "email").Result()
+	return u.c.HGet(ctx, key, "email").Result()
 }
 
 // IsVerified getter
-func (u *User) IsVerified() (bool, error) {
+func (u *User) IsVerified(ctx context.Context) (bool, error) {
 	key := fmt.Sprintf("user:%d", u.id)
-	result, err := u.c.HGet(key, "is_verified").Result()
+	result, err := u.c.HGet(ctx, key, "is_verified").Result()
 	if err != nil {
 		return false, err
 	}
@@ -52,9 +53,9 @@ func (u *User) IsVerified() (bool, error) {
 
 // CreatedAt getter
 // there should be no setter for created at
-func (u *User) CreatedAt() (*time.Time, error) {
+func (u *User) CreatedAt(ctx context.Context) (*time.Time, error) {
 	key := fmt.Sprintf("user:%d", u.id)
-	timeStr, err := u.c.HGet(key, "created_at").Result()
+	timeStr, err := u.c.HGet(ctx, key, "created_at").Result()
 	if err != nil {
 		return nil, err
 	}
@@ -67,9 +68,9 @@ func (u *User) CreatedAt() (*time.Time, error) {
 }
 
 // UpdatedAt Hash getter
-func (u *User) UpdatedAt() (*time.Time, error) {
+func (u *User) UpdatedAt(ctx context.Context) (*time.Time, error) {
 	key := fmt.Sprintf("user:%d", u.id)
-	timeStr, err := u.c.HGet(key, "updated_at").Result()
+	timeStr, err := u.c.HGet(ctx, key, "updated_at").Result()
 	if err != nil {
 		return nil, err
 	}
@@ -82,45 +83,45 @@ func (u *User) UpdatedAt() (*time.Time, error) {
 }
 
 // SetUsername Username setter
-func (u *User) SetUsername(value string) error {
+func (u *User) SetUsername(ctx context.Context, value string) error {
 	key := fmt.Sprintf("user:%d", u.id)
-	return u.c.HSet(key, "username", value).Err()
+	return u.c.HSet(ctx, key, "username", value).Err()
 }
 
 // SetPassword Password Hash setter
-func (u *User) SetPassword(value []byte) error {
+func (u *User) SetPassword(ctx context.Context, value []byte) error {
 	key := fmt.Sprintf("user:%d", u.id)
-	return u.c.HSet(key, "password", value).Err()
+	return u.c.HSet(ctx, key, "password", value).Err()
 }
 
 // SetEmail Email setter
-func (u *User) SetEmail(value string) error {
+func (u *User) SetEmail(ctx context.Context, value string) error {
 	key := fmt.Sprintf("user:%d", u.id)
-	return u.c.HSet(key, "email", value).Err()
+	return u.c.HSet(ctx, key, "email", value).Err()
 }
 
 // Verify Verify setter
 // this converts bool to a redis friendly string bool
-func (u *User) Verify(value bool) error {
+func (u *User) Verify(ctx context.Context, value bool) error {
 	result := "false"
 	if value {
 		result = "true"
 	}
 
 	key := fmt.Sprintf("user:%d", u.id)
-	return u.c.HSet(key, "is_verified", result).Err()
+	return u.c.HSet(ctx, key, "is_verified", result).Err()
 }
 
 // UpdateNow UpdatedAt setter
-func (u *User) UpdateNow() error {
+func (u *User) UpdateNow(ctx context.Context) error {
 	now := time.Now().UTC().String()
 	key := fmt.Sprintf("user:%d", u.id)
-	return u.c.HSet(key, "updated_at", now).Err()
+	return u.c.HSet(ctx, key, "updated_at", now).Err()
 }
 
 // AddUser this creates a new user entry
-func AddUser(c redis.Cmdable, username string, password []byte, email string) (*User, error) {
-	exists, err := c.HExists("user:by-username", username).Result()
+func AddUser(ctx context.Context, c redis.Cmdable, username string, password []byte, email string) (*User, error) {
+	exists, err := c.HExists(ctx, "user:by-username", username).Result()
 	if err != nil {
 		return nil, err
 	}
@@ -131,21 +132,21 @@ func AddUser(c redis.Cmdable, username string, password []byte, email string) (*
 	// set created/updated at date
 	now := time.Now().UTC().String()
 
-	id, err := c.Incr("user:next-id").Result()
+	id, err := c.Incr(ctx, "user:next-id").Result()
 	if err != nil {
 		return nil, err
 	}
 	key := fmt.Sprintf("user:%d", id)
 	pipe := c.Pipeline()
-	pipe.HSet(key, "id", id)
-	pipe.HSet(key, "username", username)
-	pipe.HSet(key, "password", password)
-	pipe.HSet(key, "email", email)
-	pipe.HSet(key, "is_verified", "false")
-	pipe.HSet(key, "created_at", now)
-	pipe.HSet(key, "updated_at", now)
-	pipe.HSet("user:by-username", username, id)
-	_, err = pipe.Exec()
+	pipe.HSet(ctx, key, "id", id)
+	pipe.HSet(ctx, key, "username", username)
+	pipe.HSet(ctx, key, "password", password)
+	pipe.HSet(ctx, key, "email", email)
+	pipe.HSet(ctx, key, "is_verified", "false")
+	pipe.HSet(ctx, key, "created_at", now)
+	pipe.HSet(ctx, key, "updated_at", now)
+	pipe.HSet(ctx, "user:by-username", username, id)
+	_, err = pipe.Exec(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -153,13 +154,13 @@ func AddUser(c redis.Cmdable, username string, password []byte, email string) (*
 }
 
 // RegisterUser register a valid user
-func RegisterUser(c redis.Cmdable, username, password, email string) (*User, error) {
+func RegisterUser(ctx context.Context, c redis.Cmdable, username, password, email string) (*User, error) {
 	hash, err := pensive.ValidatePassword(password)
 	if err != nil {
 		return nil, err
 	}
 
-	u, err := AddUser(c, username, hash, email)
+	u, err := AddUser(ctx, c, username, hash, email)
 	if err != nil {
 		return nil, err
 	}
@@ -174,7 +175,7 @@ func AuthSelf(r *http.Request, s *sessions.Session, c redis.Cmdable, key string)
 	}
 
 	u := &User{id: userID, c: c}
-	un, err := u.Username()
+	un, err := u.Username(r.Context())
 	if err != nil || un == "" {
 		return nil, err
 	}
@@ -190,8 +191,8 @@ func GetUserByUserID(c redis.Cmdable, userID int64) (*User, error) {
 }
 
 // GetUserByName gets the user using the username
-func GetUserByName(c redis.Cmdable, username string) (*User, error) {
-	id, err := c.HGet("user:by-username", username).Int64()
+func GetUserByName(ctx context.Context, c redis.Cmdable, username string) (*User, error) {
+	id, err := c.HGet(ctx, "user:by-username", username).Int64()
 	if err == redis.Nil {
 		return nil, ErrUserNotFound
 	} else if err != nil {
@@ -200,28 +201,28 @@ func GetUserByName(c redis.Cmdable, username string) (*User, error) {
 	return &User{id: id, c: c}, nil
 }
 
-func GetUser(c redis.Cmdable, user *User) (pensive.User, error) {
-	username, err := user.Username()
+func GetUser(ctx context.Context, c redis.Cmdable, user *User) (pensive.User, error) {
+	username, err := user.Username(ctx)
 	if err != nil {
 		return pensive.User{}, err
 	}
 
-	password, err := user.Password()
+	password, err := user.Password(ctx)
 	if err != nil {
 		return pensive.User{}, err
 	}
 
-	email, err := user.Email()
+	email, err := user.Email(ctx)
 	if err != nil {
 		return pensive.User{}, err
 	}
 
-	createdAt, err := user.CreatedAt()
+	createdAt, err := user.CreatedAt(ctx)
 	if err != nil {
 		return pensive.User{}, err
 	}
 
-	updatedAt, err := user.UpdatedAt()
+	updatedAt, err := user.UpdatedAt(ctx)
 	if err != nil {
 		return pensive.User{}, err
 	}
@@ -238,13 +239,13 @@ func GetUser(c redis.Cmdable, user *User) (pensive.User, error) {
 }
 
 // AuthUser authenticates the user by its username and password
-func AuthUser(c redis.Cmdable, username, password string) (*User, error) {
-	user, err := GetUserByName(c, username)
+func AuthUser(ctx context.Context, c redis.Cmdable, username, password string) (*User, error) {
+	user, err := GetUserByName(ctx, c, username)
 	if err != nil {
 		return nil, err
 	}
 
-	hash, err := user.Password()
+	hash, err := user.Password(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -257,10 +258,10 @@ func AuthUser(c redis.Cmdable, username, password string) (*User, error) {
 
 // UpdateUser authenticates the user by its username and password and updates it with new ones
 // userID is the current user requesting
-func UpdateUser(c redis.Cmdable, userID int64, newUsername, oldPassword, newPassword, newEmail string) error {
+func UpdateUser(ctx context.Context, c redis.Cmdable, userID int64, newUsername, oldPassword, newPassword, newEmail string) error {
 	// get the account to be updated
 	// if username is taken, make sure it is owned by the current user
-	_, err := GetUserByName(c, newUsername)
+	_, err := GetUserByName(ctx, c, newUsername)
 	if err != nil {
 		// skip vacant username
 		if err != ErrUserNotFound {
@@ -269,7 +270,7 @@ func UpdateUser(c redis.Cmdable, userID int64, newUsername, oldPassword, newPass
 	}
 
 	user := &User{id: userID, c: c}
-	hash, err := user.Password()
+	hash, err := user.Password(ctx)
 	if err != nil {
 		return err
 	}
@@ -278,7 +279,7 @@ func UpdateUser(c redis.Cmdable, userID int64, newUsername, oldPassword, newPass
 		return err
 	}
 
-	oldUsername, err := user.Username()
+	oldUsername, err := user.Username(ctx)
 	if err != nil {
 		return err
 	}
@@ -289,29 +290,29 @@ func UpdateUser(c redis.Cmdable, userID int64, newUsername, oldPassword, newPass
 	// update all details in the pipe
 	key := fmt.Sprintf("user:%d", user.id)
 	pipe := c.Pipeline()
-	pipe.HSet(key, "id", user.id)
+	pipe.HSet(ctx, key, "id", user.id)
 	if newUsername != "" {
-		pipe.HSet(key, "username", newUsername)
+		pipe.HSet(ctx, key, "username", newUsername)
 	}
 	if newPassword != "" {
-		pipe.HSet(key, "password", newPassword)
+		pipe.HSet(ctx, key, "password", newPassword)
 	}
 	if newEmail != "" {
-		pipe.HSet(key, "email", newEmail)
+		pipe.HSet(ctx, key, "email", newEmail)
 	}
-	pipe.HSet(key, "updated_at", now)
-	pipe.HDel("user:by-username", oldUsername)
-	pipe.HSet("user:by-username", newUsername, user.id)
-	_, err = pipe.Exec()
+	pipe.HSet(ctx, key, "updated_at", now)
+	pipe.HDel(ctx, "user:by-username", oldUsername)
+	pipe.HSet(ctx, "user:by-username", newUsername, user.id)
+	_, err = pipe.Exec(ctx)
 	return err
 }
 
 // UpdateUsername authenticates the user by its username and password and updates it with new ones
 // userID is the current user requesting
-func UpdateUsername(c redis.Cmdable, userID int64, newUsername, oldPassword string) error {
+func UpdateUsername(ctx context.Context, c redis.Cmdable, userID int64, newUsername, oldPassword string) error {
 	// get the account to be updated
 	// if username is taken, make sure it is owned by the current user
-	_, err := GetUserByName(c, newUsername)
+	_, err := GetUserByName(ctx, c, newUsername)
 	if err != nil {
 		// skip vacant username
 		if err != ErrUserNotFound {
@@ -320,7 +321,7 @@ func UpdateUsername(c redis.Cmdable, userID int64, newUsername, oldPassword stri
 	}
 
 	user := &User{id: userID, c: c}
-	hash, err := user.Password()
+	hash, err := user.Password(ctx)
 	if err != nil {
 		return err
 	}
@@ -329,7 +330,7 @@ func UpdateUsername(c redis.Cmdable, userID int64, newUsername, oldPassword stri
 		return err
 	}
 
-	oldUsername, err := user.Username()
+	oldUsername, err := user.Username(ctx)
 	if err != nil {
 		return err
 	}
@@ -340,22 +341,22 @@ func UpdateUsername(c redis.Cmdable, userID int64, newUsername, oldPassword stri
 	// update all details in the pipe
 	key := fmt.Sprintf("user:%d", user.id)
 	pipe := c.Pipeline()
-	pipe.HSet(key, "id", user.id)
+	pipe.HSet(ctx, key, "id", user.id)
 	if newUsername != "" {
-		pipe.HSet(key, "username", newUsername)
+		pipe.HSet(ctx, key, "username", newUsername)
 	}
-	pipe.HSet(key, "updated_at", now)
-	pipe.HDel("user:by-username", oldUsername)
-	pipe.HSet("user:by-username", newUsername, user.id)
-	_, err = pipe.Exec()
+	pipe.HSet(ctx, key, "updated_at", now)
+	pipe.HDel(ctx, "user:by-username", oldUsername)
+	pipe.HSet(ctx, "user:by-username", newUsername, user.id)
+	_, err = pipe.Exec(ctx)
 	return err
 }
 
 // UpdatePassword authenticates the user by its username and password and updates it with new ones
 // userID is the current user requesting
-func UpdatePassword(c redis.Cmdable, userID int64, oldPassword, newPassword string) error {
+func UpdatePassword(ctx context.Context, c redis.Cmdable, userID int64, oldPassword, newPassword string) error {
 	user := &User{id: userID, c: c}
-	hash, err := user.Password()
+	hash, err := user.Password(ctx)
 	if err != nil {
 		return err
 	}
@@ -370,20 +371,20 @@ func UpdatePassword(c redis.Cmdable, userID int64, oldPassword, newPassword stri
 	// update all details in the pipe
 	key := fmt.Sprintf("user:%d", user.id)
 	pipe := c.Pipeline()
-	pipe.HSet(key, "id", user.id)
+	pipe.HSet(ctx, key, "id", user.id)
 	if newPassword != "" {
-		pipe.HSet(key, "password", newPassword)
+		pipe.HSet(ctx, key, "password", newPassword)
 	}
-	pipe.HSet(key, "updated_at", now)
-	_, err = pipe.Exec()
+	pipe.HSet(ctx, key, "updated_at", now)
+	_, err = pipe.Exec(ctx)
 	return err
 }
 
 // UpdateEmail authenticates the user by its username and password and updates it with new ones
 // userID is the current user requesting
-func UpdateEmail(c redis.Cmdable, userID int64, newEmail, oldPassword string) error {
+func UpdateEmail(ctx context.Context, c redis.Cmdable, userID int64, newEmail, oldPassword string) error {
 	user := &User{id: userID, c: c}
-	hash, err := user.Password()
+	hash, err := user.Password(ctx)
 	if err != nil {
 		return err
 	}
@@ -398,11 +399,11 @@ func UpdateEmail(c redis.Cmdable, userID int64, newEmail, oldPassword string) er
 	// update all details in the pipe
 	key := fmt.Sprintf("user:%d", user.id)
 	pipe := c.Pipeline()
-	pipe.HSet(key, "id", user.id)
+	pipe.HSet(ctx, key, "id", user.id)
 	if newEmail != "" {
-		pipe.HSet(key, "email", newEmail)
+		pipe.HSet(ctx, key, "email", newEmail)
 	}
-	pipe.HSet(key, "updated_at", now)
-	_, err = pipe.Exec()
+	pipe.HSet(ctx, key, "updated_at", now)
+	_, err = pipe.Exec(ctx)
 	return err
 }

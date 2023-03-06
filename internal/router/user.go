@@ -1,13 +1,14 @@
 package router
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
-	"github.com/go-redis/redis"
 	"github.com/gocs/errored"
 	"github.com/gocs/pensive/internal/manager"
 	sessions "github.com/gocs/pensive/internal/session"
+	"github.com/redis/go-redis/v9"
 
 	"github.com/gocs/pensive/pkg/mail"
 	"github.com/gocs/pensive/pkg/objectstore"
@@ -46,7 +47,7 @@ func (u *UserLogin) Post(w http.ResponseWriter, r *http.Request) {
 	username := r.PostForm.Get("username")
 	password := r.PostForm.Get("password")
 
-	user, err := manager.AuthUser(u.client, username, password)
+	user, err := manager.AuthUser(r.Context(), u.client, username, password)
 	if err != nil {
 		logErr(w, "AuthSelf err:", err)
 		http.Redirect(w, r, "/login", http.StatusFound)
@@ -99,7 +100,7 @@ func (ur *UserRegister) Post(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, err := manager.RegisterUser(ur.client, username, password, email)
+	u, err := manager.RegisterUser(r.Context(), ur.client, username, password, email)
 	if err != nil {
 		logErr(w, "RegisterUser err:", err)
 		http.Redirect(w, r, "/register", http.StatusFound)
@@ -154,7 +155,7 @@ func (us *UserSettings) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, err := manager.GetUser(us.client, user)
+	u, err := manager.GetUser(r.Context(), us.client, user)
 	if err != nil {
 		logErr(w, "GetUser err:", err)
 		return
@@ -175,7 +176,7 @@ func (us *UserSettings) GetProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, err := manager.GetUser(us.client, user)
+	u, err := manager.GetUser(r.Context(), us.client, user)
 	if err != nil {
 		logErr(w, "GetUser err:", err)
 		return
@@ -206,7 +207,7 @@ func (us *UserSettings) SetProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := manager.UpdateUsername(us.client, user.ID(), username, password); err != nil {
+	if err := manager.UpdateUsername(r.Context(), us.client, user.ID(), username, password); err != nil {
 		logErr(w, "GetUser err:", err)
 	}
 
@@ -220,7 +221,7 @@ func (us *UserSettings) GetPrivacy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, err := manager.GetUser(us.client, user)
+	u, err := manager.GetUser(r.Context(), us.client, user)
 	if err != nil {
 		logErr(w, "GetUser err:", err)
 		return
@@ -267,7 +268,7 @@ func (us *UserSettings) SetPrivacy(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if err := manager.UpdatePassword(us.client, user.ID(), oldpassword, newpassword); err != nil {
+	if err := manager.UpdatePassword(r.Context(), us.client, user.ID(), oldpassword, newpassword); err != nil {
 		logErr(w, "GetUser err:", err)
 	}
 
@@ -281,13 +282,13 @@ func (us *UserSettings) GetAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, err := manager.GetUser(us.client, user)
+	u, err := manager.GetUser(r.Context(), us.client, user)
 	if err != nil {
 		logErr(w, "GetUser err:", err)
 		return
 	}
 
-	isVerified, err := user.IsVerified()
+	isVerified, err := user.IsVerified(r.Context())
 	if err != nil {
 		logErr(w, "GetUser err:", err)
 		return
@@ -319,7 +320,7 @@ func (us *UserSettings) SetAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := manager.UpdateEmail(us.client, user.ID(), email, password); err != nil {
+	if err := manager.UpdateEmail(r.Context(), us.client, user.ID(), email, password); err != nil {
 		logErr(w, "GetUser err:", err)
 	}
 
@@ -340,7 +341,7 @@ func (us *UserSettings) VerifyEmail(w http.ResponseWriter, r *http.Request) {
 	}
 	fullHost := fmt.Sprintf("%s://%s", r.URL.Scheme, r.Host)
 
-	err = sendVerification(us.accessSecret, us.fromEmail, us.password, fullHost, user)
+	err = sendVerification(r.Context(), us.accessSecret, us.fromEmail, us.password, fullHost, user)
 	if err != nil {
 		logErr(w, "oldpassword, newpassword, or confpassword cannot be empty")
 		http.Redirect(w, r, "/settings/account", http.StatusFound)
@@ -350,13 +351,13 @@ func (us *UserSettings) VerifyEmail(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, r.Referer(), http.StatusFound)
 }
 
-func sendVerification(accessSecret, fromEmail, password, appIP string, user *manager.User) error {
+func sendVerification(ctx context.Context, accessSecret, fromEmail, password, appIP string, user *manager.User) error {
 	t, err := token.Create(accessSecret, fmt.Sprint(user.ID()))
 	if err != nil {
 		return err
 	}
 
-	isVerified, err := user.IsVerified()
+	isVerified, err := user.IsVerified(ctx)
 	if err != nil {
 		return err
 	}
@@ -364,12 +365,12 @@ func sendVerification(accessSecret, fromEmail, password, appIP string, user *man
 		return errored.New("user is already verified")
 	}
 
-	email, err := user.Email()
+	email, err := user.Email(ctx)
 	if err != nil {
 		return err
 	}
 
-	username, err := user.Username()
+	username, err := user.Username(ctx)
 	if err != nil {
 		return err
 	}
@@ -418,7 +419,7 @@ func (us *UserSettings) AcceptEmailVerif(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	isVerified, err := user.IsVerified()
+	isVerified, err := user.IsVerified(r.Context())
 	if err != nil {
 		logErr(w, "IsVerified err:", err)
 		http.Redirect(w, r, r.Referer(), http.StatusFound)
@@ -440,7 +441,7 @@ func (us *UserSettings) AcceptEmailVerif(w http.ResponseWriter, r *http.Request)
 	}
 
 	// verification passed
-	err = user.Verify(true)
+	err = user.Verify(r.Context(), true)
 	if err != nil {
 		logErr(w, "user Verify err:", err)
 		http.Redirect(w, r, r.Referer(), http.StatusFound)

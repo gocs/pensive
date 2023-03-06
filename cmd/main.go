@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
@@ -10,7 +11,9 @@ import (
 )
 
 func main() {
-	r, err := router.New(&router.Config{
+	ctx := context.Background()
+
+	r, err := router.New(ctx, &router.Config{
 		// sets the session cookie store key
 		SessionKey: getEnv("SESSION_KEY", "soopa-shiikurrets"),
 		// sets the redis localhost and port

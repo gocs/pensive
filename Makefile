@@ -1,16 +1,19 @@
 
 KEY := "sessionKey"
 
+include .env
+export
+
 .PHONY: prod
 prod:
 	@GOOS="linux" GOARCH="amd64" CGO_ENABLED=0 go build -o app ./cmd/main.go
-	@docker-compose down && docker-compose up --build -d
+	@docker compose down && docker compose up --build -d
 
 
 .PHONY: dev
 dev:
 	@GOOS="linux" GOARCH="amd64" CGO_ENABLED=0 go build -o ./test/app ./cmd/main.go
-	@cd test && docker-compose down && docker-compose up --build -d
+	@cd test && docker compose down && docker compose up --build -d
 
 
 

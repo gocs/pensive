@@ -1,16 +1,25 @@
 package manager
 
-import "github.com/go-redis/redis"
+import (
+	"context"
+	"log"
+
+	"github.com/redis/go-redis/v9"
+)
 
 type Manager struct {
 	Cmdable redis.Cmdable
 }
 
-func NewManager(addr, password string) (*Manager, error) {
+func NewManager(ctx context.Context, addr, password string) (*Manager, error) {
 	r := redis.NewClient(&redis.Options{
 		Addr:     addr,
 		Password: password, // no password set
+		DB:       0,
 	})
 
-	return &Manager{Cmdable: r}, r.Ping().Err()
+	if err := r.Ping(ctx).Err(); err != nil {
+		return nil, err
+	}
+	return &Manager{Cmdable: r}, nil
 }

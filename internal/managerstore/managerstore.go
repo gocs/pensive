@@ -5,38 +5,38 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/go-redis/redis"
 	"github.com/gocs/pensive"
 	"github.com/gocs/pensive/internal/manager"
 	"github.com/gocs/pensive/pkg/file"
 	"github.com/gocs/pensive/pkg/objectstore"
+	"github.com/redis/go-redis/v9"
 )
 
 func ListPost(ctx context.Context, objs *objectstore.ObjectStore, c redis.Cmdable) ([]pensive.PostPublic, error) {
-	posts, err := manager.GetAllPosts(c)
+	posts, err := manager.GetAllPosts(ctx, c)
 	if err != nil {
 		return nil, err
 	}
 
 	ps := []pensive.PostPublic{}
 	for _, post := range posts {
-		user, err := post.User()
+		user, err := post.User(ctx)
 		if err != nil {
 			return nil, err
 		}
-		username, err := user.Username()
+		username, err := user.Username(ctx)
 		if err != nil {
 			return nil, err
 		}
-		body, err := post.Body()
+		body, err := post.Body(ctx)
 		if err != nil {
 			return nil, err
 		}
-		filename, err := post.MediaID()
+		filename, err := post.MediaID(ctx)
 		if err != nil {
 			return nil, err
 		}
-		updatedAt, err := post.UpdatedAt()
+		updatedAt, err := post.UpdatedAt(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -66,30 +66,30 @@ func ListPost(ctx context.Context, objs *objectstore.ObjectStore, c redis.Cmdabl
 }
 
 func ListPostByUserID(ctx context.Context, objs *objectstore.ObjectStore, c redis.Cmdable, userID int64) ([]pensive.PostPublic, error) {
-	posts, err := manager.GetPosts(c, userID)
+	posts, err := manager.GetPosts(ctx, c, userID)
 	if err != nil {
 		return nil, err
 	}
 
 	ps := []pensive.PostPublic{}
 	for _, post := range posts {
-		user, err := post.User()
+		user, err := post.User(ctx)
 		if err != nil {
 			return nil, err
 		}
-		username, err := user.Username()
+		username, err := user.Username(ctx)
 		if err != nil {
 			return nil, err
 		}
-		body, err := post.Body()
+		body, err := post.Body(ctx)
 		if err != nil {
 			return nil, err
 		}
-		filename, err := post.MediaID()
+		filename, err := post.MediaID(ctx)
 		if err != nil {
 			return nil, err
 		}
-		updatedAt, err := post.UpdatedAt()
+		updatedAt, err := post.UpdatedAt(ctx)
 		if err != nil {
 			return nil, err
 		}
