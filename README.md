@@ -17,9 +17,9 @@ rename `.env copy` to `.env`
 
 ## run prod
 
-this includes prometheus and graphana
+this includes prometheus and grafana
 
-```make dev```
+```make prod```
 
 
 ## license
