@@ -11,7 +11,7 @@
 
 SESSION_KEY=soopa-shiikurrets
 REDIS_ADDR=redis:6379
-REDIS_PASSWORD="struct256_Type"
+REDIS_PASSWORD=struct256_Type
 
 SEAWEED_SERVER_ADDR=http://seaweedfs:9333
 SEAWEED_UPLOAD_ADDR=http://seaweedfs:8080
