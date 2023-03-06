@@ -41,17 +41,9 @@ func ListPost(ctx context.Context, objs *objectstore.ObjectStore, c redis.Cmdabl
 			return nil, err
 		}
 
-		bName := fmt.Sprintf("user%d", user.ID())
-
 		attachmentURL := ""
 		if filename != "" {
-			opts := objectstore.PresignedGetObjectOptions{}
-			url, err := objs.GetPresignedURLObject(ctx, bName, filename, opts)
-			if err != nil {
-				return nil, err
-			}
-
-			attachmentURL = url.String()
+			attachmentURL = fmt.Sprintf("/@%s/%s", username, filename)
 		}
 
 		ps = append(ps, pensive.PostPublic{
@@ -59,7 +51,7 @@ func ListPost(ctx context.Context, objs *objectstore.ObjectStore, c redis.Cmdabl
 			Caption:        body,
 			AttachmentURL:  attachmentURL,
 			AttachmentType: file.GetMediaType(filename),
-			UpdatedAt:      updatedAt.Format(time.RFC822Z),
+			UpdatedAt:      updatedAt.Format(time.RFC822),
 		})
 	}
 	return ps, nil
@@ -94,17 +86,9 @@ func ListPostByUserID(ctx context.Context, objs *objectstore.ObjectStore, c redi
 			return nil, err
 		}
 
-		bName := fmt.Sprintf("user%d", user.ID())
-
-		attachmentURL := ""
+		attachmentURL := "#"
 		if filename != "" {
-			opts := objectstore.PresignedGetObjectOptions{}
-			url, err := objs.GetPresignedURLObject(ctx, bName, filename, opts)
-			if err != nil {
-				return nil, err
-			}
-
-			attachmentURL = url.String()
+			attachmentURL = fmt.Sprintf("/@%s/%s", username, filename)
 		}
 
 		ps = append(ps, pensive.PostPublic{
@@ -112,7 +96,7 @@ func ListPostByUserID(ctx context.Context, objs *objectstore.ObjectStore, c redi
 			Caption:        body,
 			AttachmentURL:  attachmentURL,
 			AttachmentType: file.GetMediaType(filename),
-			UpdatedAt:      updatedAt.Format(time.RFC822Z),
+			UpdatedAt:      updatedAt.Format(time.RFC822),
 		})
 	}
 	return ps, nil

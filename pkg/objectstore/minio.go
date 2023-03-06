@@ -2,6 +2,7 @@ package objectstore
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"log"
 	"net/url"
@@ -95,7 +96,17 @@ func (ostore *ObjectStore) GetPresignedURLObject(ctx context.Context, bucketName
 	if ostore.PresignedURLExpiration == 0 {
 		ostore.PresignedURLExpiration = time.Second * 24 * 60 * 60
 	}
+
+	rp := make(url.Values)
+	rp.Set("response-content-disposition", fmt.Sprintf(`attachment; filename="%s"`, filename))
+	opts.ReqParams = rp
+
 	return ostore.mc.PresignedGetObject(ctx, bucketName, filename, ostore.PresignedURLExpiration, opts.ReqParams)
+}
+
+// GetObject gets object to be written
+func (ostore *ObjectStore) GetObject(ctx context.Context, bucketName, filename string) (*minio.Object, error) {
+	return ostore.mc.GetObject(ctx, bucketName, filename, minio.GetObjectOptions{})
 }
 
 type PutObjectOptions minio.PutObjectOptions

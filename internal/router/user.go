@@ -100,18 +100,17 @@ func (ur *UserRegister) Post(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, err := manager.RegisterUser(r.Context(), ur.client, username, password, email)
+	_, err := manager.RegisterUser(r.Context(), ur.client, username, password, email)
 	if err != nil {
 		logErr(w, "RegisterUser err:", err)
 		http.Redirect(w, r, "/register", http.StatusFound)
 		return
 	}
 
-	bName := fmt.Sprintf("user%d", u.ID())
 	location := "us-east-1"
 	opts := objectstore.MakeBucketOptions{Region: location}
 
-	err = ur.objs.MakeBucket(r.Context(), bName, opts)
+	err = ur.objs.MakeBucket(r.Context(), username, opts)
 	if err != nil {
 		logErr(w, "MakeBucket err:", err)
 		http.Redirect(w, r, "/register", http.StatusFound)

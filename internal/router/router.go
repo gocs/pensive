@@ -70,6 +70,7 @@ func New(ctx context.Context, config *Config) (*mux.Router, error) {
 	r.HandleFunc("/", a.home).Methods("GET")
 	r.Handle("/home", http.RedirectHandler("/", http.StatusFound)).Methods("GET")
 	r.HandleFunc("/@{username}", a.profile).Methods("GET")
+	r.HandleFunc("/@{username}/{filename}", a.GetObject).Methods("GET")
 	r.HandleFunc("/post", a.homePost).Methods("POST")
 	r.HandleFunc("/login", ul.Get).Methods("GET")
 	r.HandleFunc("/login", ul.Post).Methods("POST")
@@ -147,6 +148,12 @@ func (a *App) homePost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userID := self.ID()
+	u, err := self.Username(r.Context())
+	if err != nil {
+		log.Println("unauthorized:", err)
+		http.Redirect(w, r, "/login", http.StatusFound)
+		return
+	}
 
 	mediaSource := "media-source"
 	filename := ""
@@ -154,12 +161,11 @@ func (a *App) homePost(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		defer mf.Close()
 
-		bName := fmt.Sprintf("user%d", userID)
 		opts := objectstore.PutObjectOptions{
 			ContentType: file.DetectContentType(fh.Filename),
 		}
 
-		_, err := a.objs.SaveObject(r.Context(), bName, fh.Filename, mf, fh.Size, opts)
+		_, err := a.objs.SaveObject(r.Context(), u, fh.Filename, mf, fh.Size, opts)
 		if err != nil {
 			log.Println(w, "SaveObject err:", err)
 			http.Redirect(w, r, "/", http.StatusFound)
